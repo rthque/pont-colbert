@@ -1,0 +1,609 @@
+<title>Pont Colbert — Ouvertures</title>
+<style>
+  /* Charte Pont Colbert : navy #003366, acier #4A5A6A, brique #9B2A2A/#C44A2A,
+     crème #F5F0E8, émeraude #1A6B4E, sable #D9C9A8 — serif industriel + sans condensé */
+  :root {
+    --bg: #F5F0E8;
+    --surface: #FFFFFF;
+    --ink: #003366;
+    --ink-soft: #4A5A6A;
+    --line: #D9C9A8;
+    --accent: #C44A2A;
+    --accent-deep: #9B2A2A;
+    --accent-ink: #F5F0E8;
+    --go-bg: #E7F0EA;
+    --go-line: #9DC4AF;
+    --go-ink: #14563F;
+    --go-badge: #1A6B4E;
+    --pm-bg: #F5E4DE;
+    --pm-line: #D8A491;
+    --pm-ink: #7E2018;
+    --pm-strong: #9B2A2A;
+    --exc-bg: #F3EAD7;
+    --exc-line: #C9B384;
+    --exc-ink: #7A6234;
+    --chip-pred: #E4E9EE;
+    --chip-pred-ink: #3C5872;
+    --hero-bg: #003366;
+    --hero-ink: #F5F0E8;
+    --steel-light: #8CA0B3;
+    --shadow: 0 2px 8px rgba(0, 51, 102, .10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #112233;
+      --surface: #1A2C40;
+      --ink: #F5F0E8;
+      --ink-soft: #9FB0C0;
+      --line: #33475C;
+      --accent: #D96A4A;
+      --accent-deep: #C44A2A;
+      --accent-ink: #1A1008;
+      --go-bg: #17332A;
+      --go-line: #2E614C;
+      --go-ink: #8FCCAF;
+      --go-badge: #1A6B4E;
+      --pm-bg: #38201B;
+      --pm-line: #6E3A2E;
+      --pm-ink: #E8A18D;
+      --pm-strong: #DB7A5E;
+      --exc-bg: #2E2919;
+      --exc-line: #625533;
+      --exc-ink: #D3BF8D;
+      --chip-pred: #21374D;
+      --chip-pred-ink: #9FC0DC;
+      --hero-bg: #0B1A2A;
+      --hero-ink: #F5F0E8;
+      --steel-light: #6B8095;
+      --shadow: 0 2px 8px rgba(0, 0, 0, .38);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F5F0E8; --surface: #FFFFFF; --ink: #003366; --ink-soft: #4A5A6A;
+    --line: #D9C9A8; --accent: #C44A2A; --accent-deep: #9B2A2A; --accent-ink: #F5F0E8;
+    --go-bg: #E7F0EA; --go-line: #9DC4AF; --go-ink: #14563F; --go-badge: #1A6B4E;
+    --pm-bg: #F5E4DE; --pm-line: #D8A491; --pm-ink: #7E2018; --pm-strong: #9B2A2A;
+    --exc-bg: #F3EAD7; --exc-line: #C9B384; --exc-ink: #7A6234;
+    --chip-pred: #E4E9EE; --chip-pred-ink: #3C5872;
+    --hero-bg: #003366; --hero-ink: #F5F0E8; --steel-light: #8CA0B3;
+    --shadow: 0 2px 8px rgba(0, 51, 102, .10);
+  }
+  :root[data-theme="dark"] {
+    --bg: #112233; --surface: #1A2C40; --ink: #F5F0E8; --ink-soft: #9FB0C0;
+    --line: #33475C; --accent: #D96A4A; --accent-deep: #C44A2A; --accent-ink: #1A1008;
+    --go-bg: #17332A; --go-line: #2E614C; --go-ink: #8FCCAF; --go-badge: #1A6B4E;
+    --pm-bg: #38201B; --pm-line: #6E3A2E; --pm-ink: #E8A18D; --pm-strong: #DB7A5E;
+    --exc-bg: #2E2919; --exc-line: #625533; --exc-ink: #D3BF8D;
+    --chip-pred: #21374D; --chip-pred-ink: #9FC0DC;
+    --hero-bg: #0B1A2A; --hero-ink: #F5F0E8; --steel-light: #6B8095;
+    --shadow: 0 2px 8px rgba(0, 0, 0, .38);
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 'Roboto Condensed', 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .serif { font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 14px 40px; }
+
+  /* ---- webcam (haut d'écran, données dessous) ---- */
+  .cam-panel {
+    display: none; position: sticky; top: 0; z-index: 30;
+    background: #000; margin: 0 -14px; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  }
+  body.cam-open .cam-panel { display: block; }
+  .cam-frame { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 40vh; background: #000; }
+  .cam-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .cam-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--hero-bg); color: var(--hero-ink); }
+  .cam-bar .cam-title { flex: 1; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; min-width: 0; }
+  .cam-bar a { color: var(--hero-ink); opacity: .78; font-size: .74rem; white-space: nowrap; }
+  .cam-bar a:hover { opacity: 1; }
+  .cam-bar button {
+    background: transparent; color: var(--hero-ink); border: 1px solid var(--steel-light);
+    border-radius: 6px; padding: 7px 12px; min-height: 36px;
+    font: 700 .72rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    cursor: pointer; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+  }
+  .cam-bar button:hover { border-color: var(--hero-ink); }
+  .cam-blocked { display: none; padding: 20px 16px; text-align: center; color: var(--hero-ink); background: var(--hero-bg); font-size: .88rem; line-height: 1.5; }
+  .cam-blocked a {
+    display: inline-block; margin-top: 12px; background: var(--accent); color: var(--accent-ink);
+    border-radius: 6px; padding: 12px 18px; font-weight: 700; text-decoration: none;
+    text-transform: uppercase; letter-spacing: .06em; font-size: .78rem;
+  }
+  body.cam-blocked-mode .cam-frame { display: none; }
+  body.cam-blocked-mode .cam-blocked { display: block; }
+
+  /* ---- héro : silhouette réelle du pont tournant ---- */
+  .hero {
+    --truss-line: #F5F0E8; --steel-line: #90A4B6; --brick-line: #E06A47; --brick-fill: rgba(224,106,71,.4);
+    margin-top: 14px; background: var(--hero-bg); color: var(--hero-ink);
+    border: 1px solid var(--steel-light); border-radius: 8px;
+    padding: 14px 18px 12px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .hero .bridge { display: block; width: min(340px, 92%); height: auto; margin: 2px auto 8px; }
+  .hero .rot-arrow { transform-box: view-box; transform-origin: 100px 12px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero .rot-arrow { animation: swing 9s ease-in-out infinite; }
+    @keyframes swing { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
+  }
+  .hero-rows { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 {
+    margin: 0; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: 1.55rem; font-weight: 700; line-height: 1.05; letter-spacing: .05em;
+    text-transform: uppercase; text-wrap: balance;
+  }
+  .hero small {
+    display: block; font-size: .68rem; font-weight: 400; color: var(--steel-light);
+    text-transform: uppercase; letter-spacing: .2em; margin-top: 5px;
+  }
+  .hero-btns { display: flex; gap: 8px; }
+  .hero-btns button {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 6px;
+    padding: 11px 15px; min-height: 44px;
+    font: 700 .8rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em; cursor: pointer; white-space: nowrap;
+  }
+  .hero-btns button:hover { background: var(--accent-deep); }
+  .hero-btns button.ghost { background: transparent; border: 1px solid var(--steel-light); color: var(--hero-ink); }
+  .hero-btns button.ghost:hover { border-color: var(--hero-ink); }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- navigation jour ---- */
+  .nav { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; gap: 8px; align-items: center; padding: 11px 0; }
+  body.cam-open .nav { position: static; }
+  .nav .arrow {
+    flex: none; width: 48px; height: 48px; border-radius: 6px;
+    background: var(--accent); color: var(--accent-ink); border: none;
+    font-size: 1.15rem; font-weight: 700; cursor: pointer; line-height: 1;
+  }
+  .nav .arrow:hover { background: var(--accent-deep); }
+  .nav input[type="date"] {
+    flex: 1; min-width: 0; height: 48px; padding: 0 14px; border-radius: 6px;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    font: 700 1rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dayhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 15px 0 4px; }
+  .dayhead h2 {
+    margin: 0; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem; font-weight: 700; letter-spacing: .02em;
+  }
+  .dayhead h2::first-letter { text-transform: uppercase; }
+  .today-link {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 5px;
+    padding: 6px 11px; min-height: 32px; cursor: pointer;
+    font: 700 .7rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .today-link:hover { background: var(--accent-deep); }
+  .today-link[hidden] { display: none; }
+  .chip {
+    font: 700 .64rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .09em; padding: 5px 10px; border-radius: 4px;
+  }
+  .chip.official { background: var(--go-bg); color: var(--go-ink); border: 1px solid var(--go-line); }
+  .chip.pred { background: var(--chip-pred); color: var(--chip-pred-ink); border: 1px solid var(--chip-pred-ink); }
+
+  /* ---- timeline ---- */
+  .tl { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .past-toggle {
+    background: transparent; border: 1px dashed var(--line); border-radius: 6px;
+    color: var(--ink-soft); font: 700 .78rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .07em; padding: 12px; min-height: 44px; cursor: pointer; width: 100%;
+  }
+  .past-toggle:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .ev {
+    display: flex; align-items: center; gap: 12px; padding: 12px 13px;
+    border-radius: 6px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow);
+  }
+  .ev.past { opacity: .5; }
+  .ev .ico { flex: none; width: 38px; height: 38px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .ev .ico svg { display: block; }
+  .ev.go .ico { background: var(--go-badge); }
+  .ev.pm .ico { background: var(--pm-strong); }
+  .ev.exc .ico { background: transparent; border: 1px dashed var(--exc-line); color: var(--exc-ink); font-weight: 700; }
+  .ev .t { font-size: 1.35rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; min-width: 4.1ch; letter-spacing: -.01em; }
+  .ev .lbl { flex: 1; min-width: 0; }
+  .ev .lbl b { display: block; font-size: .93rem; font-weight: 700; }
+  .ev .lbl span { display: block; font-size: .8rem; font-weight: 400; color: var(--ink-soft); margin-top: 1px; }
+  .ev.go { background: var(--go-bg); border-color: var(--go-line); }
+  .ev.go .t, .ev.go .lbl b { color: var(--go-ink); }
+  .ev.pm { background: var(--pm-bg); border-color: var(--pm-line); }
+  .ev.pm .t { color: var(--pm-strong); }
+  .ev.pm .lbl b { color: var(--pm-ink); }
+  .ev.exc { background: var(--exc-bg); border-color: var(--exc-line); border-style: dashed; }
+  .ev.exc .t, .ev.exc .lbl b { color: var(--exc-ink); }
+  .ev .meta { flex: none; text-align: right; font-size: .8rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .ev .meta b { display: block; font-size: .96rem; font-weight: 700; color: inherit; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 16px 0 0; font-size: .76rem; color: var(--ink-soft); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+  .nextwrap { margin-top: 28px; }
+  .nextwrap h3 {
+    font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: .98rem; font-weight: 700; letter-spacing: .03em;
+    color: var(--ink); margin: 0 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
+  }
+  .nextdays { display: flex; flex-direction: column; gap: 6px; }
+  .nextday {
+    display: flex; gap: 12px; align-items: baseline; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 14px; min-height: 48px; cursor: pointer; color: var(--ink); font: inherit; box-shadow: var(--shadow);
+  }
+  .nextday:hover { border-color: var(--accent); }
+  .nextday .d { min-width: 7.2ch; font-size: .86rem; font-weight: 700; }
+  .nextday .d::first-letter { text-transform: uppercase; }
+  .nextday .pms { flex: 1; font-size: .96rem; font-weight: 700; line-height: 1.5; font-variant-numeric: tabular-nums; color: var(--pm-strong); }
+  .nextday .pms small { color: var(--ink-soft); font-size: inherit; font-weight: 400; }
+
+  footer {
+    margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-size: .77rem; font-weight: 400; color: var(--ink-soft); line-height: 1.6;
+  }
+  footer b { font-weight: 700; }
+
+  dialog {
+    max-width: 540px; width: calc(100vw - 32px); border: 1px solid var(--line);
+    border-radius: 8px; background: var(--surface); color: var(--ink);
+    padding: 24px 22px 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+  }
+  dialog::backdrop { background: rgba(0, 21, 43, .62); }
+  dialog h2 {
+    margin: 0 0 4px; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: 1.18rem; font-weight: 700; letter-spacing: .03em; padding-right: 84px;
+  }
+  dialog .src { font-size: .78rem; color: var(--ink-soft); margin: 6px 0 14px; }
+  dialog h4 { margin: 18px 0 6px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .11em; }
+  dialog h4.g { color: var(--go-ink); }
+  dialog h4.o { color: var(--exc-ink); }
+  dialog p, dialog ul { margin: 6px 0; font-size: .92rem; }
+  dialog ul { padding-left: 20px; }
+  dialog li { margin: 4px 0; }
+  dialog .note { font-size: .8rem; color: var(--ink-soft); border-top: 1px solid var(--line); margin-top: 16px; padding-top: 12px; }
+  .dlg-close {
+    position: absolute; top: 14px; right: 14px; background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; color: var(--ink-soft);
+    font: 700 .78rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em; padding: 9px 12px; min-height: 40px; cursor: pointer;
+  }
+  .dlg-close:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .empty { text-align: center; color: var(--ink-soft); padding: 26px 0; }
+
+  @media (max-width: 400px) {
+    h1 { font-size: 1.3rem; }
+    .hero-btns button { padding: 11px 12px; letter-spacing: .04em; }
+    .ev .t { font-size: 1.2rem; }
+    .cam-frame { max-height: 34vh; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="cam-panel" id="camPanel">
+    <div class="cam-bar">
+      <span class="cam-title">Webcam — pont Colbert en direct</span>
+      <a href="https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ" target="_blank" rel="noopener">Plein écran ↗</a>
+      <button type="button" id="camClose">Fermer ✕</button>
+    </div>
+    <div class="cam-frame" id="camFrame"></div>
+    <div class="cam-blocked">
+      La vidéo ne peut pas s'afficher à l'intérieur de cette page.
+      <br><a href="https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ" target="_blank" rel="noopener">Ouvrir la webcam dans un onglet ↗</a>
+    </div>
+  </div>
+
+  <header class="hero">
+    <!--__BRIDGE__-->
+    <div class="hero-rows">
+      <div>
+        <h1>Pont Colbert</h1>
+        <small>Dieppe · Créneaux d'ouverture</small>
+      </div>
+      <div class="hero-btns">
+        <button type="button" id="camBtn" class="ghost">▶ Webcam</button>
+        <button type="button" id="rulesBtn">Règles</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Choix du jour">
+    <button class="arrow" id="prev" type="button" aria-label="Jour précédent">←</button>
+    <input type="date" id="datePick" min="2026-07-01" max="2028-12-31" aria-label="Date">
+    <button class="arrow" id="next" type="button" aria-label="Jour suivant">→</button>
+  </nav>
+
+  <div class="dayhead">
+    <h2 id="dayTitle"></h2>
+    <button class="today-link" id="todayBtn" type="button" hidden>↩ Aujourd'hui</button>
+    <span id="srcChip" class="chip official"></span>
+  </div>
+
+  <ol class="tl" id="timeline"></ol>
+
+  <div class="legend">
+    <span><i style="background:var(--go-badge)"></i>Ouverture possible</span>
+    <span><i style="background:var(--pm-strong)"></i>Pleine mer</span>
+    <span><i style="background:var(--exc-line)"></i>Exceptionnelle</span>
+  </div>
+
+  <section class="nextwrap">
+    <h3>Jours suivants — pleines mers</h3>
+    <div class="nextdays" id="nextDays"></div>
+  </section>
+
+  <footer>
+    <p><b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, port de Dieppe).
+    2027–2028 : prédiction harmonique (102 composantes) calée sur 2 ans de données SHOM —
+    écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique de Dieppe),
+    coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.</p>
+    <p>Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
+    décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).</p>
+  </footer>
+</div>
+
+<dialog id="rulesDlg" aria-labelledby="rulesTitle">
+  <button class="dlg-close" id="rulesClose" type="button">Fermer ✕</button>
+  <h2 id="rulesTitle">Règles d'ouverture du pont Colbert</h2>
+  <p class="src">En vigueur depuis juillet 2026 — communication de la capitainerie de Dieppe.</p>
+
+  <h4 class="g">1 · Ouvertures liées à la marée</h4>
+  <p>Le pont n'est manœuvré qu'en présence de navires, dans les créneaux suivants autour de la pleine mer (PM) :</p>
+  <ul>
+    <li><b>PM − 2 h</b> — passage 2 heures avant la pleine mer ;</li>
+    <li><b>PM − 45 min</b> — passage 45 minutes avant la pleine mer ;</li>
+    <li><b>PM + 45 min</b> — passage 45 minutes après la pleine mer.</li>
+  </ul>
+
+  <h4 class="g">2 · Ouvertures à heure fixe (entrées/sorties quai de la Somme)</h4>
+  <p>Réalisées uniquement si des navires sont présents :</p>
+  <ul>
+    <li><b>07 h 30</b> ;</li>
+    <li><b>18 h 30</b>.</li>
+  </ul>
+
+  <h4 class="o">3 · Ouvertures exceptionnelles</h4>
+  <p>Si des contraintes techniques, une dégradation imprévisible de l'état de la mer ou un cas de force majeure
+  l'exigent, des ouvertures exceptionnelles peuvent être organisées à :</p>
+  <ul>
+    <li><b>11 h 30</b> ;</li>
+    <li><b>15 h 30</b>.</li>
+  </ul>
+
+  <p class="note">Trajet quai de la Cale → bassin de Paris (BVC) : viser en priorité les créneaux sur marée.
+  Les heures de pleine mer affichées proviennent des prédictions SHOM (2026) ou du modèle harmonique validé (2027-2028).</p>
+</dialog>
+
+<script>
+"use strict";
+// [minutesUTC, heightCm, isHigh, coeff (0 = n/a), predicted]
+const TIDES = /*__DATA__*/[];
+
+const CAM_URL = "https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ";
+
+const ICO_BOAT = '<svg width="26" height="8" viewBox="0 0 70 20" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+  '<path d="M9.146 7.60682V2.12486C9.146 0.951022 10.097 0 11.2709 0H38.0951C38.8029 0 39.4646 0.351878 39.8586 0.940153L44.3352 7.60682L24.1952 9.01026L9.146 7.60682Z" fill="#F5F0E8"/>' +
+  '<path d="M0.0386704 8.70963L2.10613 15.651L2.38988 16.1163L3.26486 18.8023C3.47736 19.5168 4.0836 20 4.76608 20H59.2363C59.9188 20 60.5238 19.5168 60.7376 18.8023L61.6988 15.8671L61.8938 15.6496L63.9612 8.70825C64.1237 8.1617 63.755 7.60001 63.2325 7.60001H0.767407C0.246167 7.60001 -0.123827 8.1617 0.0386704 8.70825V8.70963Z" fill="#F5F0E8"/>' +
+  '<path d="M2 15.6L2.98976 18.8315C3.20301 19.5286 3.81142 20 4.49634 20H59.5037C60.1886 20 60.7957 19.5286 61.0102 18.8315L62 15.6H2Z" fill="#003366"/>' +
+  '<path d="M16.6972 2.60824V5.56925L13.4807 5.56925L13.4807 2.60824L16.6972 2.60824Z" fill="#003366"/>' +
+  '<path d="M22.6972 2.60836V5.56937L19.4807 5.56937L19.4807 2.60836L22.6972 2.60836Z" fill="#003366"/>' +
+  '<path d="M37 2.60836L37 5.56937L25.4804 5.56937L25.4804 2.60836L37 2.60836Z" fill="#003366"/></svg>';
+const ICO_WAVE = '<svg width="20" height="12" viewBox="0 0 20 12" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+  '<path d="M0 9C2.5 9 2.5 6 5 6C7.5 6 7.5 9 10 9C12.5 9 12.5 6 15 6C17.5 6 17.5 9 20 9V12H0V9Z" fill="#F5F0E8"/>' +
+  '<path d="M10 0L13 4H7L10 0Z" fill="#F5F0E8"/></svg>';
+
+const TZ = "Europe/Paris";
+const MIN_DAY = "2026-07-01", MAX_DAY = "2028-12-31";
+const fmtDay = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const fmtDayShort = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "short", day: "2-digit", month: "2-digit" });
+const fmtKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const fmtHM = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+
+const hm = ms => fmtHM.format(ms).replace(":", "h");
+const keyOf = ms => fmtKey.format(ms);
+
+const byDay = new Map();
+for (const t of TIDES) {
+  const k = keyOf(t[0] * 60000);
+  if (!byDay.has(k)) byDay.set(k, []);
+  byDay.get(k).push(t);
+}
+
+function localToUtc(dayStr, hh, mm) {
+  const [Y, M, D] = dayStr.split("-").map(Number);
+  let guess = Date.UTC(Y, M - 1, D, hh - 1, mm);
+  for (const off of [1, 2, 0]) {
+    const g = Date.UTC(Y, M - 1, D, hh - off, mm);
+    const p = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(g);
+    if (p === String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0") && keyOf(g) === dayStr) return g;
+  }
+  return guess;
+}
+
+function addDays(dayStr, n) {
+  const [Y, M, D] = dayStr.split("-").map(Number);
+  const d = new Date(Date.UTC(Y, M - 1, D, 12));
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function highsAround(dayStr) {
+  const out = [];
+  for (const k of [addDays(dayStr, -1), dayStr, addDays(dayStr, 1)]) {
+    for (const t of (byDay.get(k) || [])) if (t[2]) out.push(t);
+  }
+  return out;
+}
+
+function eventsFor(dayStr) {
+  const evs = [];
+  let anyPred = false, anyData = false;
+  for (const t of (byDay.get(dayStr) || [])) { anyData = true; if (t[4]) anyPred = true; }
+  for (const t of highsAround(dayStr)) {
+    const pmMs = t[0] * 60000;
+    const slots = [
+      [-120, "Passage PM − 2 h"],
+      [-45, "Passage PM − 45 min"],
+      [45, "Passage PM + 45 min"],
+    ];
+    for (const [off, label] of slots) {
+      const ms = pmMs + off * 60000;
+      if (keyOf(ms) !== dayStr) continue;
+      evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: label, sub: "Ouverture sur marée — si navires présents" });
+    }
+    if (keyOf(pmMs) === dayStr) {
+      evs.push({
+        ms: pmMs, cls: "pm", ico: "wave", big: hm(pmMs), title: "Pleine mer",
+        sub: "Pas de manœuvre à la pleine mer même",
+        metaTop: (t[1] / 100).toFixed(2).replace(".", ",") + " m",
+        metaSub: t[3] ? (t[4] ? "coeff ≈ " + t[3] : "coeff " + t[3]) : ""
+      });
+    }
+  }
+  for (const [hh, mm] of [[7, 30], [18, 30]]) {
+    const ms = localToUtc(dayStr, hh, mm);
+    evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: "Ouverture à heure fixe", sub: "Entrées/sorties quai de la Somme — si navires présents" });
+  }
+  for (const [hh, mm] of [[11, 30], [15, 30]]) {
+    const ms = localToUtc(dayStr, hh, mm);
+    evs.push({ ms, cls: "exc", ico: "exc", big: hm(ms), title: "Ouverture exceptionnelle", sub: "Seulement si contrainte technique, mer dégradée ou force majeure" });
+  }
+  evs.sort((a, b) => a.ms - b.ms);
+  return { evs, anyPred, anyData };
+}
+
+const $ = id => document.getElementById(id);
+let current = keyOf(Date.now());
+if (current < MIN_DAY) current = MIN_DAY;
+if (current > MAX_DAY) current = MAX_DAY;
+let showPast = false;
+
+function evNode(e, isPast) {
+  const li = document.createElement("li");
+  li.className = "ev " + e.cls + (isPast ? " past" : "");
+  const ico = e.ico === "boat" ? ICO_BOAT : e.ico === "wave" ? ICO_WAVE : "!";
+  li.innerHTML =
+    '<span class="ico">' + ico + "</span>" +
+    '<span class="t">' + e.big + "</span>" +
+    '<span class="lbl"><b></b><span></span></span>' +
+    (e.metaTop ? '<span class="meta"><b></b>' + (e.metaSub ? "<span></span>" : "") + "</span>" : "");
+  li.querySelector(".lbl b").textContent = e.title;
+  li.querySelector(".lbl span").textContent = e.sub;
+  if (e.metaTop) {
+    li.querySelector(".meta b").textContent = e.metaTop;
+    const msub = li.querySelector(".meta span");
+    if (msub) msub.textContent = e.metaSub;
+  }
+  return li;
+}
+
+function render() {
+  $("datePick").value = current;
+  const todayKey = keyOf(Date.now());
+  $("todayBtn").hidden = (current === todayKey);
+  const dayMs = localToUtc(current, 12, 0);
+  $("dayTitle").textContent = fmtDay.format(dayMs);
+  const { evs, anyPred, anyData } = eventsFor(current);
+  const chip = $("srcChip");
+  if (!anyData) { chip.textContent = "hors période couverte"; chip.className = "chip pred"; }
+  else if (anyPred) { chip.textContent = "Prédiction harmonique ±2 min"; chip.className = "chip pred"; }
+  else { chip.textContent = "Marées officielles SHOM"; chip.className = "chip official"; }
+  const ol = $("timeline");
+  ol.innerHTML = "";
+  if (!anyData) {
+    ol.innerHTML = '<li class="empty">Pas de données de marée pour cette date.<br>Période couverte : 01/07/2026 → 31/12/2028.</li>';
+  } else {
+    const isToday = current === todayKey;
+    const now = Date.now();
+    const past = isToday ? evs.filter(e => e.ms < now) : [];
+    const upcoming = isToday ? evs.filter(e => e.ms >= now) : evs;
+    if (past.length) {
+      const tg = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "past-toggle";
+      btn.textContent = showPast
+        ? "Masquer les " + past.length + " créneaux passés ▴"
+        : past.length + " créneau" + (past.length > 1 ? "x" : "") + " déjà passé" + (past.length > 1 ? "s" : "") + " — afficher ▾";
+      btn.addEventListener("click", () => { showPast = !showPast; render(); });
+      tg.appendChild(btn);
+      ol.appendChild(tg);
+      if (showPast) for (const e of past) ol.appendChild(evNode(e, true));
+    }
+    if (!upcoming.length && past.length) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "Plus de créneau aujourd'hui — voir les jours suivants ci-dessous.";
+      ol.appendChild(li);
+    }
+    for (const e of upcoming) ol.appendChild(evNode(e, false));
+  }
+  const nd = $("nextDays");
+  nd.innerHTML = "";
+  for (let i = 1; i <= 6; i++) {
+    const k = addDays(current, i);
+    if (k > MAX_DAY) break;
+    const highs = (byDay.get(k) || []).filter(t => t[2]);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "nextday";
+    const pms = highs.map(t => hm(t[0] * 60000) + (t[3] ? " <small>(" + (t[4] ? "≈" : "") + t[3] + ")</small>" : "")).join(" · ");
+    btn.innerHTML = '<span class="d"></span><span class="pms">' + (pms || "—") + "</span>";
+    btn.querySelector(".d").textContent = fmtDayShort.format(localToUtc(k, 12, 0));
+    btn.addEventListener("click", () => { current = k; showPast = false; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+    nd.appendChild(btn);
+  }
+}
+
+// ---- webcam ----
+let camLoaded = false;
+function openCam() {
+  if (!camLoaded) {
+    const f = document.createElement("iframe");
+    f.src = CAM_URL;
+    f.allow = "autoplay; fullscreen; picture-in-picture";
+    f.setAttribute("allowfullscreen", "");
+    f.title = "Webcam pont Colbert";
+    $("camFrame").appendChild(f);
+    camLoaded = true;
+  }
+  document.body.classList.add("cam-open");
+  window.scrollTo({ top: 0 });
+}
+function closeCam() {
+  document.body.classList.remove("cam-open");
+  $("camFrame").innerHTML = "";
+  camLoaded = false;
+}
+document.addEventListener("securitypolicyviolation", e => {
+  if (e.violatedDirective && e.violatedDirective.indexOf("frame") === 0 && String(e.blockedURI).indexOf("viewsurf") !== -1) {
+    document.body.classList.add("cam-blocked-mode");
+  }
+});
+$("camBtn").addEventListener("click", () => {
+  document.body.classList.contains("cam-open") ? closeCam() : openCam();
+});
+$("camClose").addEventListener("click", closeCam);
+
+$("prev").addEventListener("click", () => { const k = addDays(current, -1); if (k >= MIN_DAY) { current = k; showPast = false; render(); } });
+$("next").addEventListener("click", () => { const k = addDays(current, 1); if (k <= MAX_DAY) { current = k; showPast = false; render(); } });
+$("todayBtn").addEventListener("click", () => {
+  let k = keyOf(Date.now());
+  if (k < MIN_DAY) k = MIN_DAY; if (k > MAX_DAY) k = MAX_DAY;
+  current = k; showPast = false; render();
+});
+$("datePick").addEventListener("change", e => {
+  const v = e.target.value;
+  if (v && v >= MIN_DAY && v <= MAX_DAY) { current = v; showPast = false; render(); }
+});
+$("rulesBtn").addEventListener("click", () => $("rulesDlg").showModal());
+$("rulesClose").addEventListener("click", () => $("rulesDlg").close());
+$("rulesDlg").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+render();
+setInterval(() => { if (current === keyOf(Date.now())) render(); }, 60000);
+</script>
