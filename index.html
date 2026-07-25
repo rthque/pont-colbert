@@ -1,4 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pont Colbert — Ouvertures</title>
+<meta name="description" content="Créneaux d'ouverture du pont tournant Colbert à Dieppe selon la marée, du 1er juillet 2026 au 31 décembre 2028, avec webcam du port en direct.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F5F0E8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#112233">
+<meta name="apple-mobile-web-app-title" content="Pont Colbert">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta property="og:title" content="Pont Colbert — Ouvertures">
+<meta property="og:description" content="Créneaux d'ouverture du pont tournant Colbert à Dieppe selon la marée, du 1er juillet 2026 au 31 décembre 2028, avec webcam du port en direct.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23003366'/%3E%3Cpath d='M7 45h50M7 36q25-16 50 0M15 36v9M25 30v15M39 30v15M49 36v9' stroke='%23F5F0E8' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='45' r='4' fill='%23C44A2A'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23003366'/%3E%3Cpath d='M7 45h50M7 36q25-16 50 0M15 36v9M25 30v15M39 30v15M49 36v9' stroke='%23F5F0E8' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='45' r='4' fill='%23C44A2A'/%3E%3C/svg%3E">
 <style>
   /* Charte Pont Colbert : navy #003366, acier #4A5A6A, brique #9B2A2A/#C44A2A,
      crème #F5F0E8, émeraude #1A6B4E, sable #D9C9A8 — serif industriel + sans condensé */
@@ -281,7 +297,8 @@
     .cam-frame { max-height: 34vh; }
   }
 </style>
-
+</head>
+<body>
 <div class="wrap">
 
   <div class="cam-panel" id="camPanel">
@@ -623,3 +640,5 @@ $("rulesDlg").addEventListener("click", e => { if (e.target === e.currentTarget)
 render();
 setInterval(() => { if (current === keyOf(Date.now())) render(); }, 60000);
 </script>
+</body>
+</html>

@@ -37,7 +37,7 @@ src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
   bridge.svg.html             silhouette du pont (treillis, pivot, flèche de rotation)
   dataset.json                marées 2026-2028 : [minutesUTC, hauteurCm, pleineMer, coeff, prédit]
-  build.js                    assemble le gabarit + le pont + les données → index.html
+  build.js                    assemble gabarit + pont + données, ajoute l'en-tête HTML → index.html
   harmonic.js                 analyse et prédiction harmonique de la marée
   fit_predict2.js             ajuste le modèle sur les données SHOM et le valide
   gen_dataset.js              produit dataset.json (données exactes + prédictions)
@@ -54,6 +54,11 @@ Après une modification du gabarit ou du dessin :
 ```bash
 node src/build.js
 ```
+
+Le gabarit est un fragment (il commence par `<title>`) : `build.js` l'enveloppe dans un
+document complet avec `<meta name="viewport">`, sans quoi les mobiles affichent la page
+en tout petit. L'option `--fragment` produit à la place `src/artifact.html`, format
+attendu par l'hébergeur d'Artifacts qui ajoute lui-même son enveloppe.
 
 Vérifier la logique des créneaux :
 
