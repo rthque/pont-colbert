@@ -50,15 +50,29 @@ src/
                                    pour mémoire ; plus utilisée depuis le héro photo
 ```
 
-## Changer la photo du héro
+## Photos du héro
+
+Deux photos, choisies selon le thème : le pont illuminé la nuit en thème sombre, une
+carte postale ancienne colorisée en thème clair. Un bouton soleil/lune posé sur la photo
+force un thème et mémorise le choix ; sans choix, la préférence du système s'applique.
+
+Les adresses des photos vivent dans des attributs `data` et sont posées par script avant
+la première peinture. C'est délibéré : l'analyseur spéculatif du navigateur lit le HTML
+brut avant l'exécution des scripts, et téléchargerait donc la photo correspondant à la
+préférence du système même lorsqu'un thème contraire est mémorisé. Le build refuse toute
+sortie où la photo du héro porterait un `src` ou un `srcset` statique.
+
+Pour remplacer une photo :
 
 ```bash
-python src/prepare_photo.py chemin/vers/photo.jpg
+python src/prepare_photo.py chemin/vers/photo.jpg --nom pont-jour --largeurs 800
 node src/build.js
 ```
 
-Le script retire la bande supérieure de l'image (`CROP_TOP` dans le fichier, à ajuster
-selon la photo) et écrit `assets/pont-nuit-1200.jpg` et `assets/pont-nuit-760.jpg`.
+`--nom` vaut `pont-jour` ou `pont-nuit`. `--haut` et `--bas` retirent une bande de texte
+incrustée (le titre de la photo de nuit, la légende de la carte postale). Les fichiers
+sont nommés d'après leur largeur réelle — jamais d'agrandissement — et le build les
+découvre dans `assets/` pour en tirer un `srcset` exact.
 Nécessite Pillow : `python -m pip install --user pillow`.
 
 ## Modifier le site
