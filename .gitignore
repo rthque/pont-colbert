@@ -9,3 +9,8 @@ public/
 
 # fichiers déposés par wrangler s'il est lancé à la main
 .wrangler/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
