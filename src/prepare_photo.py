@@ -1,40 +1,41 @@
-# Prépare la photo de nuit du pont pour le héro du site.
-# - retire le bandeau de texte incrusté en haut de l'image d'origine
-# - produit deux largeurs (mobile / grand écran) en JPEG progressif optimisé
+# Prépare une photo du pont pour le héro du site.
+# Retire la bande de texte incrustée (titre en haut, légende en bas selon la source),
+# puis produit deux largeurs en JPEG progressif optimisé.
 #
-# Usage : python src/prepare_photo.py <image_source>
+# Usage :
+#   python src/prepare_photo.py <source> --nom pont-nuit --haut 135
+#   python src/prepare_photo.py <source> --nom pont-jour --bas 55
+import argparse
 import os
-import sys
 
 from PIL import Image
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else None
-if not SRC or not os.path.isfile(SRC):
-    raise SystemExit("usage : python src/prepare_photo.py <image_source>")
+parser = argparse.ArgumentParser(description="Prépare une photo du héro.")
+parser.add_argument("source", help="image d'origine (jpg, png, webp…)")
+parser.add_argument("--nom", required=True, help="préfixe des fichiers produits, ex. pont-nuit")
+parser.add_argument("--haut", type=int, default=0, help="pixels à retirer en haut")
+parser.add_argument("--bas", type=int, default=0, help="pixels à retirer en bas")
+parser.add_argument("--largeurs", type=int, nargs="+", default=[1200, 760])
+args = parser.parse_args()
+
+if not os.path.isfile(args.source):
+    raise SystemExit(f"introuvable : {args.source}")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "assets")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# Le titre incrusté occupe la bande supérieure de l'image d'origine.
-# On coupe 135 px sur 896, soit 15 % de la hauteur : le texte disparaît,
-# le ciel bleu nuit et la ligne des quais sont conservés.
-CROP_TOP = 135
-
-img = Image.open(SRC).convert("RGB")
+img = Image.open(args.source).convert("RGB")
 w, h = img.size
 print(f"source : {w}x{h}")
 
-img = img.crop((0, CROP_TOP, w, h))
-w, h = img.size
-print(f"recadrée : {w}x{h} (bandeau de texte retiré)")
+if args.haut or args.bas:
+    img = img.crop((0, args.haut, w, h - args.bas))
+    w, h = img.size
+    print(f"recadree : {w}x{h} (texte incruste retire)")
 
-for width in (1200, 760):
-    if width > w:
-        resized = img
-    else:
-        resized = img.resize((width, round(h * width / w)), Image.LANCZOS)
-    path = os.path.join(OUT_DIR, f"pont-nuit-{width}.jpg")
+for width in args.largeurs:
+    resized = img if width >= w else img.resize((width, round(h * width / w)), Image.LANCZOS)
+    path = os.path.join(OUT_DIR, f"{args.nom}-{width}.jpg")
     resized.save(path, "JPEG", quality=82, optimize=True, progressive=True)
-    size_ko = os.path.getsize(path) / 1024
-    print(f"{os.path.basename(path)} : {resized.size[0]}x{resized.size[1]}, {size_ko:.0f} Ko")
+    print(f"{os.path.basename(path)} : {resized.size[0]}x{resized.size[1]}, {os.path.getsize(path) / 1024:.0f} Ko")

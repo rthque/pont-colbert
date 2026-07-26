@@ -127,12 +127,39 @@
     position: absolute; inset: 0; width: 100%; height: 100%;
     object-fit: cover; object-position: 50% 45%;
   }
+  /* voile : bleu nuit sur la photo nocturne, navy sur la carte postale diurne */
   .hero::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(to top,
       rgba(4, 14, 24, .95) 0%, rgba(4, 14, 24, .80) 24%,
       rgba(4, 14, 24, .22) 54%, rgba(4, 14, 24, 0) 78%);
   }
+  @media (prefers-color-scheme: light) {
+    .hero::after {
+      background: linear-gradient(to top,
+        rgba(0, 26, 52, .94) 0%, rgba(0, 26, 52, .80) 26%,
+        rgba(0, 26, 52, .26) 56%, rgba(0, 26, 52, 0) 80%);
+    }
+  }
+  :root[data-theme="light"] .hero::after {
+    background: linear-gradient(to top,
+      rgba(0, 26, 52, .94) 0%, rgba(0, 26, 52, .80) 26%,
+      rgba(0, 26, 52, .26) 56%, rgba(0, 26, 52, 0) 80%);
+  }
+  :root[data-theme="dark"] .hero::after {
+    background: linear-gradient(to top,
+      rgba(4, 14, 24, .95) 0%, rgba(4, 14, 24, .80) 24%,
+      rgba(4, 14, 24, .22) 54%, rgba(4, 14, 24, 0) 78%);
+  }
+  /* bascule de thème : posée sur la photo, lisible sur ciel clair comme sur nuit */
+  .theme-toggle {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    width: 38px; height: 38px; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 6px;
+    background: rgba(6, 18, 30, .58); border: 1px solid rgba(245, 240, 232, .45); color: #F5F0E8;
+  }
+  .theme-toggle:hover { background: rgba(6, 18, 30, .85); border-color: #F5F0E8; }
+  .theme-toggle svg { display: block; width: 19px; height: 19px; }
   .hero-content {
     position: absolute; inset: auto 0 0 0; z-index: 1;
     display: flex; align-items: flex-end; justify-content: space-between;
@@ -322,9 +349,26 @@
   </div>
 
   <header class="hero">
-    <img class="hero-photo" src="__PHOTO_SRC__" __PHOTO_SRCSET__
-         width="1195" height="761" fetchpriority="high" decoding="async"
-         alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
+    <picture>
+      <source id="heroDaySrc" media="(prefers-color-scheme: light)" __PHOTO_JOUR_SRCSET__>
+      <script>
+        /* Applique le thème mémorisé avant que l'image ne soit analysée : évite le
+           passage éclair d'un thème à l'autre et le téléchargement de la mauvaise photo. */
+        (function () {
+          try {
+            var t = localStorage.getItem('pc-theme');
+            if (t === 'light' || t === 'dark') {
+              document.documentElement.dataset.theme = t;
+              document.getElementById('heroDaySrc').media = (t === 'light' ? 'all' : 'not all');
+            }
+          } catch (e) { /* stockage indisponible : on garde la préférence système */ }
+        })();
+      </script>
+      <img class="hero-photo" src="__PHOTO_SRC__" __PHOTO_SRCSET__
+           width="1195" height="761" fetchpriority="high" decoding="async"
+           alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
+    </picture>
+    <button class="theme-toggle" id="themeBtn" type="button" aria-label="Changer de thème"></button>
     <div class="hero-content">
       <div class="titles">
         <h1>Pont Colbert</h1>
@@ -584,6 +628,50 @@ function render() {
     nd.appendChild(btn);
   }
 }
+
+// ---- thème clair / sombre ----
+// Sans choix mémorisé, la préférence du système s'applique. Le bouton force un thème
+// et bascule aussi la photo du héro : carte postale ancienne le jour, pont illuminé la nuit.
+const THEME_KEY = "pc-theme";
+const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
+  '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.6 12h2.2M19.2 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6"/></svg>';
+const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"/></svg>';
+const ALT_NUIT = "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue";
+const ALT_JOUR = "Carte postale ancienne colorisée du pont Colbert à Dieppe, sa travée en arc au-dessus du chenal, les falaises et le quartier du Pollet en arrière-plan";
+const daySrc = $("heroDaySrc");
+const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
+
+function themeActuel() {
+  const force = document.documentElement.dataset.theme;
+  return force === "light" || force === "dark" ? force : (prefersLight.matches ? "light" : "dark");
+}
+
+function majBoutonTheme() {
+  const actuel = themeActuel();
+  const cible = actuel === "dark" ? "clair" : "sombre";
+  const btn = $("themeBtn");
+  btn.innerHTML = actuel === "dark" ? ICON_SUN : ICON_MOON;
+  btn.setAttribute("aria-label", "Passer au thème " + cible);
+  btn.title = "Passer au thème " + cible;
+  const img = document.querySelector(".hero-photo");
+  if (img) img.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
+}
+
+function appliquerTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
+    m.removeAttribute("media");
+    m.setAttribute("content", theme === "light" ? "#F5F0E8" : "#112233");
+  }
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* stockage indisponible */ }
+  majBoutonTheme();
+}
+
+$("themeBtn").addEventListener("click", () => appliquerTheme(themeActuel() === "dark" ? "light" : "dark"));
+prefersLight.addEventListener("change", () => { if (!document.documentElement.dataset.theme) majBoutonTheme(); });
+majBoutonTheme();
 
 // ---- webcam ----
 let camLoaded = false;

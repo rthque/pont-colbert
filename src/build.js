@@ -17,34 +17,45 @@ const src = __dirname;
 const root = path.join(src, '..');
 const fragmentOnly = process.argv.includes('--fragment');
 
-const PHOTO_LARGE = 'assets/pont-nuit-1200.jpg';
-const PHOTO_SMALL = 'assets/pont-nuit-760.jpg';
+const NUIT_LARGE = 'assets/pont-nuit-1200.jpg';
+const NUIT_SMALL = 'assets/pont-nuit-760.jpg';
+const JOUR_LARGE = 'assets/pont-jour-1200.jpg';
+const JOUR_SMALL = 'assets/pont-jour-760.jpg';
+const SIZES = '(max-width: 600px) 100vw, 560px';
 
 let html = fs.readFileSync(path.join(src, 'pont_colbert_template.html'), 'utf8');
 const data = fs.readFileSync(path.join(src, 'dataset.json'), 'utf8');
 
 if (!html.includes('/*__DATA__*/[]')) throw new Error('gabarit : repère __DATA__ introuvable');
-if (!html.includes('__PHOTO_SRC__')) throw new Error('gabarit : repère __PHOTO_SRC__ introuvable');
+for (const marker of ['__PHOTO_SRC__', '__PHOTO_SRCSET__', '__PHOTO_JOUR_SRCSET__']) {
+  if (!html.includes(marker)) throw new Error(`gabarit : repère ${marker} introuvable`);
+}
 
 html = html.replace('/*__DATA__*/[]', data);
 
-// --- photo du héro ---
-for (const rel of [PHOTO_LARGE, PHOTO_SMALL]) {
+// --- photos du héro : pont illuminé la nuit, carte postale ancienne le jour ---
+for (const rel of [NUIT_LARGE, NUIT_SMALL, JOUR_LARGE, JOUR_SMALL]) {
   if (!fs.existsSync(path.join(root, rel))) {
-    throw new Error(`${rel} manquant — relancer : python src/prepare_photo.py <image_source>`);
+    throw new Error(`${rel} manquant — relancer : python src/prepare_photo.py <source> --nom <préfixe>`);
   }
 }
+const dataUri = rel => `data:image/jpeg;base64,${fs.readFileSync(path.join(root, rel)).toString('base64')}`;
 
 if (fragmentOnly) {
-  const b64 = fs.readFileSync(path.join(root, PHOTO_LARGE)).toString('base64');
-  html = html.replace('__PHOTO_SRC__', `data:image/jpeg;base64,${b64}`).replace(' __PHOTO_SRCSET__', '');
+  // l'hébergeur d'Artifacts n'accepte aucun fichier joint : les deux photos sont
+  // intégrées, en largeur réduite pour que la page reste raisonnable.
+  html = html
+    .replace('__PHOTO_SRC__', dataUri(NUIT_SMALL))
+    .replace(' __PHOTO_SRCSET__', '')
+    .replace('__PHOTO_JOUR_SRCSET__', `srcset="${dataUri(JOUR_SMALL)}"`);
 } else {
-  const srcset = `srcset="${PHOTO_SMALL} 760w, ${PHOTO_LARGE} 1195w" ` +
-    `sizes="(max-width: 600px) 100vw, 560px"`;
-  html = html.replace('__PHOTO_SRC__', PHOTO_LARGE).replace('__PHOTO_SRCSET__', srcset);
+  html = html
+    .replace('__PHOTO_SRC__', NUIT_LARGE)
+    .replace('__PHOTO_SRCSET__', `srcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" sizes="${SIZES}"`)
+    .replace('__PHOTO_JOUR_SRCSET__', `srcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w" sizes="${SIZES}"`);
 }
 
-if (/__(DATA|PHOTO_SRC|PHOTO_SRCSET)__/.test(html)) throw new Error('un repère est resté dans la sortie');
+if (/__(DATA|PHOTO_SRC|PHOTO_SRCSET|PHOTO_JOUR_SRCSET)__/.test(html)) throw new Error('un repère est resté dans la sortie');
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);
@@ -95,8 +106,9 @@ const doc = `<!doctype html>
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="${PHOTO_LARGE}">
-<link rel="preload" as="image" href="${PHOTO_LARGE}" imagesrcset="${PHOTO_SMALL} 760w, ${PHOTO_LARGE} 1195w" imagesizes="(max-width: 600px) 100vw, 560px">
+<meta property="og:image" content="${NUIT_LARGE}">
+<link rel="preload" as="image" media="(prefers-color-scheme: dark)" href="${NUIT_LARGE}" imagesrcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" imagesizes="${SIZES}">
+<link rel="preload" as="image" media="(prefers-color-scheme: light)" href="${JOUR_LARGE}" imagesrcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w" imagesizes="${SIZES}">
 <link rel="icon" href="${favicon}">
 <link rel="apple-touch-icon" href="${favicon}">
 ${style}
@@ -111,10 +123,13 @@ const out = path.join(root, 'index.html');
 fs.writeFileSync(out, doc);
 
 // vérifications de sortie
-for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">', PHOTO_LARGE, '</body>', '</html>']) {
+for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">',
+  NUIT_LARGE, JOUR_LARGE, 'id="themeBtn"', '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
 if ((doc.match(/<body/g) || []).length !== 1) throw new Error('sortie : <body> en double');
+if ((doc.match(/<picture>/g) || []).length !== 1) throw new Error('sortie : <picture> attendu une seule fois');
 
-console.log('index.html reconstruit :', Math.round(fs.statSync(out).size / 1024), 'Ko | viewport OK | photo liée');
+console.log('index.html reconstruit :', Math.round(fs.statSync(out).size / 1024),
+  'Ko | viewport OK | 2 photos liées | bascule de thème');
