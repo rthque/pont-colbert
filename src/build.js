@@ -19,6 +19,11 @@ const fragmentOnly = process.argv.includes('--fragment');
 
 const SIZES = '(max-width: 600px) 100vw, 560px';
 
+// Adresse publique de référence. Le site est servi par deux hébergeurs à partir du même
+// dépôt ; celui-ci est désigné comme canonique pour que les moteurs de recherche et les
+// aperçus de partage n'en retiennent qu'un. Terminer par une barre oblique.
+const SITE = 'https://pont-colbert.pages.dev/';
+
 // Les variantes sont découvertes dans assets/ : leur nom porte la largeur réelle,
 // produite par prepare_photo.py, ce qui garantit un srcset exact.
 function variantes(prefixe) {
@@ -63,8 +68,6 @@ for (const rel of [AVIS_PDF, ...AVIS_PAGES]) {
 
 // --- photos du héro : pont illuminé la nuit, carte postale ancienne le jour ---
 const dataUri = rel => `data:image/jpeg;base64,${fs.readFileSync(path.join(root, rel)).toString('base64')}`;
-
-const SITE = 'https://rthque.github.io/pont-colbert/';
 
 if (fragmentOnly) {
   // l'hébergeur d'Artifacts n'accepte aucun fichier joint : photos et pages de l'avis
@@ -137,7 +140,9 @@ const doc = `<!doctype html>
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="${plusGrande(NUIT)}">
+<meta property="og:url" content="${SITE}">
+<meta property="og:image" content="${SITE}${plusGrande(NUIT)}">
+<link rel="canonical" href="${SITE}">
 <script>
 /* Résout le thème avant tout rendu, puis ne précharge que la photo réellement
    affichée. Un préchargement conditionné par media suivrait la préférence du
@@ -180,6 +185,7 @@ fs.writeFileSync(out, doc);
 // vérifications de sortie
 for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">',
   plusGrande(NUIT), plusGrande(JOUR), AVIS_PDF, AVIS_PAGES[0],
+  `<link rel="canonical" href="${SITE}">`,
   'id="themeBtn"', 'id="suggestBtn"', 'id="stats"', '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }

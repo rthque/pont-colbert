@@ -137,6 +137,26 @@ git add -A && git commit -m "Description de la modification" && git push
 
 Le site en ligne se met à jour tout seul une minute après.
 
+## Hébergement
+
+Le dépôt est publié par deux hébergeurs qui suivent tous deux la branche `main` et
+redéploient à chaque `git push` :
+
+| Hébergeur | Adresse | Rôle |
+|---|---|---|
+| Cloudflare Pages | https://pont-colbert.pages.dev | adresse de référence |
+| GitHub Pages | https://rthque.github.io/pont-colbert/ | secours |
+
+Le site n'a aucune étape de compilation côté hébergeur : les fichiers du dépôt sont servis
+tels quels. Réglages Cloudflare Pages : préréglage *None*, commande de compilation vide,
+répertoire de sortie `/`. Toutes les adresses internes sont relatives, le site fonctionne
+donc aussi bien à la racine d'un domaine que dans un sous-répertoire.
+
+L'adresse de référence est déclarée une seule fois, par la constante `SITE` en tête de
+`build.js` : elle alimente la balise `canonical`, les métadonnées de partage et le lien
+vers le PDF de l'avis dans la version Artifact. Changer d'adresse revient à modifier cette
+ligne puis à relancer le build.
+
 ## Avertissement
 
 Outil indicatif. La capitainerie de Dieppe reste seule décisionnaire des ouvertures
