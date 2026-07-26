@@ -13,7 +13,7 @@
 <meta property="og:title" content="Pont Colbert — Ouvertures">
 <meta property="og:description" content="Créneaux d'ouverture du pont tournant Colbert à Dieppe selon la marée, du 1er juillet 2026 au 31 décembre 2028, avec webcam du port en direct.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/pont-nuit-1200.jpg">
+<meta property="og:image" content="assets/pont-nuit-1195.jpg">
 <script>
 /* Résout le thème avant tout rendu, puis ne précharge que la photo réellement
    affichée. Un préchargement conditionné par media suivrait la préférence du
@@ -31,10 +31,10 @@
     var l = document.createElement('link');
     l.rel = 'preload';
     l.as = 'image';
-    l.href = clair ? 'assets/pont-jour-1200.jpg' : 'assets/pont-nuit-1200.jpg';
+    l.href = clair ? 'assets/pont-jour-800.jpg' : 'assets/pont-nuit-1195.jpg';
     l.setAttribute('imagesrcset', clair
-      ? 'assets/pont-jour-760.jpg 760w, assets/pont-jour-1200.jpg 1200w'
-      : 'assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1200.jpg 1195w');
+      ? 'assets/pont-jour-800.jpg 800w'
+      : 'assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1195.jpg 1195w');
     l.setAttribute('imagesizes', '(max-width: 600px) 100vw, 560px');
     document.head.appendChild(l);
   } catch (e) { /* sans script : pas de préchargement, la photo se charge normalement */ }
@@ -164,7 +164,7 @@
      la page reste crème le jour. Voile dégradé pour la lisibilité du titre. */
   .hero {
     position: relative; overflow: hidden; margin: 14px -14px 0;
-    background: #06121E; aspect-ratio: 16 / 10; max-height: 44vh;
+    background: #06121E; aspect-ratio: 16 / 9; max-height: 42vh;
   }
   .hero-photo {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -396,7 +396,7 @@
     <!-- Les adresses des photos restent dans des attributs data : sans cela, l'analyseur
          spéculatif du navigateur télécharge la photo correspondant à la préférence du
          système avant même qu'un thème forcé ait pu être pris en compte. -->
-    <img class="hero-photo" id="heroPhoto" data-nuit="assets/pont-nuit-1200.jpg" data-nuit-srcset="assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1200.jpg 1195w" data-jour="assets/pont-jour-1200.jpg" data-jour-srcset="assets/pont-jour-760.jpg 760w, assets/pont-jour-1200.jpg 1200w" sizes="(max-width: 600px) 100vw, 560px"
+    <img class="hero-photo" id="heroPhoto" data-nuit="assets/pont-nuit-1195.jpg" data-nuit-srcset="assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1195.jpg 1195w" data-jour="assets/pont-jour-800.jpg" sizes="(max-width: 600px) 100vw, 560px"
          width="1195" height="761" fetchpriority="high" decoding="async"
          alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
     <script>

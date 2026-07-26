@@ -34,8 +34,16 @@ if args.haut or args.bas:
     w, h = img.size
     print(f"recadree : {w}x{h} (texte incruste retire)")
 
-for width in args.largeurs:
-    resized = img if width >= w else img.resize((width, round(h * width / w)), Image.LANCZOS)
+# jamais d'agrandissement : une largeur demandée au-delà de la source est ramenée à la source.
+# Les fichiers sont nommés d'après leur largeur réelle, dont le build tire le srcset.
+largeurs = sorted({min(largeur, w) for largeur in args.largeurs}, reverse=True)
+
+for ancien in os.listdir(OUT_DIR):
+    if ancien.startswith(args.nom + "-") and ancien.endswith(".jpg"):
+        os.remove(os.path.join(OUT_DIR, ancien))
+
+for width in largeurs:
+    resized = img if width == w else img.resize((width, round(h * width / w)), Image.LANCZOS)
     path = os.path.join(OUT_DIR, f"{args.nom}-{width}.jpg")
     resized.save(path, "JPEG", quality=82, optimize=True, progressive=True)
     print(f"{os.path.basename(path)} : {resized.size[0]}x{resized.size[1]}, {os.path.getsize(path) / 1024:.0f} Ko")

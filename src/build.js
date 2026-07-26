@@ -17,11 +17,30 @@ const src = __dirname;
 const root = path.join(src, '..');
 const fragmentOnly = process.argv.includes('--fragment');
 
-const NUIT_LARGE = 'assets/pont-nuit-1200.jpg';
-const NUIT_SMALL = 'assets/pont-nuit-760.jpg';
-const JOUR_LARGE = 'assets/pont-jour-1200.jpg';
-const JOUR_SMALL = 'assets/pont-jour-760.jpg';
 const SIZES = '(max-width: 600px) 100vw, 560px';
+
+// Les variantes sont découvertes dans assets/ : leur nom porte la largeur réelle,
+// produite par prepare_photo.py, ce qui garantit un srcset exact.
+function variantes(prefixe) {
+  const dir = path.join(root, 'assets');
+  const trouvees = (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
+    .map(f => {
+      const m = f.match(new RegExp(`^${prefixe}-(\\d+)\\.jpg$`));
+      return m ? { rel: `assets/${f}`, largeur: +m[1] } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.largeur - b.largeur);
+  if (!trouvees.length) {
+    throw new Error(`aucune photo ${prefixe}-*.jpg dans assets/ — lancer : python src/prepare_photo.py <source> --nom ${prefixe}`);
+  }
+  return trouvees;
+}
+
+const NUIT = variantes('pont-nuit');
+const JOUR = variantes('pont-jour');
+const plusGrande = v => v[v.length - 1].rel;
+const plusPetite = v => v[0].rel;
+const srcset = v => v.map(x => `${x.rel} ${x.largeur}w`).join(', ');
 
 let html = fs.readFileSync(path.join(src, 'pont_colbert_template.html'), 'utf8');
 const data = fs.readFileSync(path.join(src, 'dataset.json'), 'utf8');
@@ -32,22 +51,17 @@ if (!html.includes('__PHOTO_DATA__')) throw new Error('gabarit : repère __PHOTO
 html = html.replace('/*__DATA__*/[]', data);
 
 // --- photos du héro : pont illuminé la nuit, carte postale ancienne le jour ---
-for (const rel of [NUIT_LARGE, NUIT_SMALL, JOUR_LARGE, JOUR_SMALL]) {
-  if (!fs.existsSync(path.join(root, rel))) {
-    throw new Error(`${rel} manquant — relancer : python src/prepare_photo.py <source> --nom <préfixe>`);
-  }
-}
 const dataUri = rel => `data:image/jpeg;base64,${fs.readFileSync(path.join(root, rel)).toString('base64')}`;
 
 if (fragmentOnly) {
   // l'hébergeur d'Artifacts n'accepte aucun fichier joint : les deux photos sont
   // intégrées, en largeur réduite pour que la page reste raisonnable.
   html = html.replace('__PHOTO_DATA__',
-    `data-nuit="${dataUri(NUIT_SMALL)}" data-jour="${dataUri(JOUR_SMALL)}"`);
+    `data-nuit="${dataUri(plusPetite(NUIT))}" data-jour="${dataUri(plusPetite(JOUR))}"`);
 } else {
-  html = html.replace('__PHOTO_DATA__',
-    `data-nuit="${NUIT_LARGE}" data-nuit-srcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" ` +
-    `data-jour="${JOUR_LARGE}" data-jour-srcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w"`);
+  const attr = (nom, v) => `data-${nom}="${plusGrande(v)}"` +
+    (v.length > 1 ? ` data-${nom}-srcset="${srcset(v)}"` : '');
+  html = html.replace('__PHOTO_DATA__', `${attr('nuit', NUIT)} ${attr('jour', JOUR)}`);
 }
 
 if (/__(DATA|PHOTO_DATA)__/.test(html)) throw new Error('un repère est resté dans la sortie');
@@ -101,7 +115,7 @@ const doc = `<!doctype html>
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="${NUIT_LARGE}">
+<meta property="og:image" content="${plusGrande(NUIT)}">
 <script>
 /* Résout le thème avant tout rendu, puis ne précharge que la photo réellement
    affichée. Un préchargement conditionné par media suivrait la préférence du
@@ -119,10 +133,10 @@ const doc = `<!doctype html>
     var l = document.createElement('link');
     l.rel = 'preload';
     l.as = 'image';
-    l.href = clair ? '${JOUR_LARGE}' : '${NUIT_LARGE}';
+    l.href = clair ? '${plusGrande(JOUR)}' : '${plusGrande(NUIT)}';
     l.setAttribute('imagesrcset', clair
-      ? '${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w'
-      : '${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w');
+      ? '${srcset(JOUR)}'
+      : '${srcset(NUIT)}');
     l.setAttribute('imagesizes', '${SIZES}');
     document.head.appendChild(l);
   } catch (e) { /* sans script : pas de préchargement, la photo se charge normalement */ }
@@ -143,7 +157,7 @@ fs.writeFileSync(out, doc);
 
 // vérifications de sortie
 for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">',
-  NUIT_LARGE, JOUR_LARGE, 'id="themeBtn"', '</body>', '</html>']) {
+  plusGrande(NUIT), plusGrande(JOUR), 'id="themeBtn"', '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
