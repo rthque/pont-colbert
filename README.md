@@ -147,10 +147,22 @@ redéploient à chaque `git push` :
 | Cloudflare Pages | https://pont-colbert.pages.dev | adresse de référence |
 | GitHub Pages | https://rthque.github.io/pont-colbert/ | secours |
 
-Le site n'a aucune étape de compilation côté hébergeur : les fichiers du dépôt sont servis
-tels quels. Réglages Cloudflare Pages : préréglage *None*, commande de compilation vide,
-répertoire de sortie `/`. Toutes les adresses internes sont relatives, le site fonctionne
-donc aussi bien à la racine d'un domaine que dans un sous-répertoire.
+Réglages Cloudflare : préréglage *None*, commande de compilation `node src/publish.js`,
+répertoire de sortie `public`.
+
+`src/publish.js` assemble le dossier `public/` avec les seuls fichiers à servir —
+`index.html`, `assets/`, `docs/` — et échoue si autre chose s'y glisse. Publier la racine
+du dépôt telle quelle mettrait aussi en ligne `.git/`, `src/` et `README.md` : c'est ce
+qu'a fait le premier déploiement Cloudflare, où `/.git/config` répondait 200.
+
+GitHub Pages, lui, ne sait servir que la racine ou `docs/` : le site reste donc également
+à la racine du dépôt, d'où la duplication apparente. Toutes les adresses internes sont
+relatives, le site fonctionne aussi bien à la racine d'un domaine que dans un
+sous-répertoire.
+
+Attention au moment de créer le projet Cloudflare : le bouton d'importation d'un dépôt
+mène à **Workers**, qui publie sur `*.workers.dev`. Pour une adresse en `*.pages.dev`, il
+faut passer explicitement par l'onglet **Pages** puis *Connect to Git*.
 
 L'adresse de référence est déclarée une seule fois, par la constante `SITE` en tête de
 `build.js` : elle alimente la balise `canonical`, les métadonnées de partage et le lien

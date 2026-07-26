@@ -3,3 +3,9 @@ src/artifact.html
 
 # clés d'administration des compteurs : à ne jamais publier
 CLES-ADMIN.txt
+
+# dossier assemblé par src/publish.js à chaque mise en ligne
+public/
+
+# fichiers déposés par wrangler s'il est lancé à la main
+.wrangler/
