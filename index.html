@@ -31,9 +31,9 @@
     var l = document.createElement('link');
     l.rel = 'preload';
     l.as = 'image';
-    l.href = clair ? 'assets/pont-jour-800.jpg' : 'assets/pont-nuit-1195.jpg';
+    l.href = clair ? 'assets/pont-jour-1195.jpg' : 'assets/pont-nuit-1195.jpg';
     l.setAttribute('imagesrcset', clair
-      ? 'assets/pont-jour-800.jpg 800w'
+      ? 'assets/pont-jour-760.jpg 760w, assets/pont-jour-1195.jpg 1195w'
       : 'assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1195.jpg 1195w');
     l.setAttribute('imagesizes', '(max-width: 600px) 100vw, 560px');
     document.head.appendChild(l);
@@ -368,6 +368,69 @@
   .dlg-close:hover { color: var(--ink); border-color: var(--ink-soft); }
   .empty { text-align: center; color: var(--ink-soft); padding: 26px 0; }
 
+  /* ---- avis officiel de la capitainerie ---- */
+  .avis-dlg { max-width: 700px; }
+  .avis { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 12px; }
+  .avis img {
+    display: block; width: 100%; height: auto; background: #FFFFFF;
+    border: 1px solid var(--line); border-radius: 4px;
+  }
+  .avis-lien { margin: 0 0 6px; }
+  .avis-lien a { color: var(--accent); font-weight: 700; font-size: .86rem; }
+  .avis-texte { border-top: 1px solid var(--line); margin-top: 12px; }
+  .avis-texte summary {
+    cursor: pointer; padding: 12px 0; color: var(--ink-soft);
+    font: 700 .76rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .1em;
+  }
+  .avis-texte summary:hover { color: var(--ink); }
+  .avis-texte h4:first-of-type { margin-top: 8px; }
+
+  /* ---- suggestions ---- */
+  .champ {
+    display: block; margin: 14px 0 5px;
+    font: 700 .76rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .09em; color: var(--ink-soft);
+  }
+  .champ span { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .champ-saisie {
+    width: 100%; padding: 11px 12px; border-radius: 6px;
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    font: 400 .95rem/1.5 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+  }
+  .champ-saisie:focus { border-color: var(--accent); }
+  textarea.champ-saisie { resize: vertical; min-height: 96px; }
+  .champ-erreur { color: var(--pm-strong); font-size: .82rem; font-weight: 700; margin: 10px 0 0; }
+  .champ-erreur[hidden] { display: none; }
+  .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .btn-plein {
+    background: var(--accent-deep); color: #FFF3EC; border: none; border-radius: 6px;
+    padding: 12px 18px; min-height: 44px; cursor: pointer;
+    font: 700 .8rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .btn-plein:hover { background: var(--accent); }
+  .btn-discret {
+    background: transparent; color: var(--ink-soft); border: 1px solid var(--ink-soft);
+    border-radius: 6px; padding: 12px 16px; min-height: 44px; cursor: pointer;
+    font: 700 .78rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .btn-discret:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---- fréquentation ---- */
+  .footer-actions {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .stats {
+    display: flex; gap: 16px; margin: 0; font-size: .78rem;
+    color: var(--ink-soft); font-variant-numeric: tabular-nums;
+  }
+  .stats b { display: block; font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+  .stats span { text-align: right; }
+  .stats[hidden] { display: none; }
+
   @media (max-width: 400px) {
     .hero-content { padding: 14px 13px 12px; }
     .hero-btns button { padding: 11px 12px; letter-spacing: .04em; }
@@ -396,7 +459,7 @@
     <!-- Les adresses des photos restent dans des attributs data : sans cela, l'analyseur
          spéculatif du navigateur télécharge la photo correspondant à la préférence du
          système avant même qu'un thème forcé ait pu être pris en compte. -->
-    <img class="hero-photo" id="heroPhoto" data-nuit="assets/pont-nuit-1195.jpg" data-nuit-srcset="assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1195.jpg 1195w" data-jour="assets/pont-jour-800.jpg" sizes="(max-width: 600px) 100vw, 560px"
+    <img class="hero-photo" id="heroPhoto" data-nuit="assets/pont-nuit-1195.jpg" data-nuit-srcset="assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1195.jpg 1195w" data-jour="assets/pont-jour-1195.jpg" data-jour-srcset="assets/pont-jour-760.jpg 760w, assets/pont-jour-1195.jpg 1195w" sizes="(max-width: 600px) 100vw, 560px"
          width="1195" height="761" fetchpriority="high" decoding="async"
          alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
     <script>
@@ -460,39 +523,90 @@
     coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.</p>
     <p>Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
     décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).</p>
+
+    <div class="footer-actions">
+      <button type="button" class="btn-discret" id="suggestBtn">Proposer une amélioration</button>
+      <p class="stats" id="stats" hidden>
+        <span><b id="statVisiteurs">—</b> visiteurs</span>
+        <span><b id="statVisites">—</b> visites</span>
+      </p>
+    </div>
   </footer>
 </div>
 
-<dialog id="rulesDlg" aria-labelledby="rulesTitle">
+<dialog id="rulesDlg" class="avis-dlg" aria-labelledby="rulesTitle">
   <button class="dlg-close" id="rulesClose" type="button">Fermer ✕</button>
-  <h2 id="rulesTitle">Règles d'ouverture du pont Colbert</h2>
-  <p class="src">En vigueur depuis juillet 2026 — communication de la capitainerie de Dieppe.</p>
+  <h2 id="rulesTitle">Avis aux usagers</h2>
+  <p class="src">Capitainerie du port de Dieppe — 8 juillet 2026. Conditions d'exploitation
+  et modalités d'ouverture du pont Colbert.</p>
 
-  <h4 class="g">1 · Ouvertures liées à la marée</h4>
-  <p>Le pont n'est manœuvré qu'en présence de navires, dans les créneaux suivants autour de la pleine mer (PM) :</p>
-  <ul>
-    <li><b>PM − 2 h</b> — passage 2 heures avant la pleine mer ;</li>
-    <li><b>PM − 45 min</b> — passage 45 minutes avant la pleine mer ;</li>
-    <li><b>PM + 45 min</b> — passage 45 minutes après la pleine mer.</li>
-  </ul>
+  <div class="avis">
+    <img src="docs/avis-page-1.jpg" width="1000" height="1415" loading="lazy" decoding="async"
+         alt="Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la pleine mer), ouvertures à horaires fixes à 07h30 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 réservées aux navires EMDT.">
+    <img src="docs/avis-page-2.jpg" width="1000" height="1415" loading="lazy" decoding="async"
+         alt="Avis aux usagers, page 2 : dispositions particulières, liste de diffusion, signature du lieutenant de port.">
+  </div>
 
-  <h4 class="g">2 · Ouvertures à heure fixe (entrées/sorties quai de la Somme)</h4>
-  <p>Réalisées uniquement si des navires sont présents :</p>
-  <ul>
-    <li><b>07 h 30</b> ;</li>
-    <li><b>18 h 30</b>.</li>
-  </ul>
+  <p class="avis-lien"><a href="docs/avis-ouverture-pont-colbert.pdf" target="_blank" rel="noopener">Ouvrir le PDF officiel ↗</a></p>
 
-  <h4 class="o">3 · Ouvertures exceptionnelles</h4>
-  <p>Si des contraintes techniques, une dégradation imprévisible de l'état de la mer ou un cas de force majeure
-  l'exigent, des ouvertures exceptionnelles peuvent être organisées à :</p>
-  <ul>
-    <li><b>11 h 30</b> ;</li>
-    <li><b>15 h 30</b>.</li>
-  </ul>
+  <details class="avis-texte">
+    <summary>Version texte</summary>
+    <h4 class="g">1 · Ouvertures à la marée</h4>
+    <p>Manœuvres réalisées uniquement en présence de navires :</p>
+    <ul>
+      <li><b>PM − 2 h</b> — 2 heures avant la pleine mer ;</li>
+      <li><b>PM − 45 min</b> — 45 minutes avant la pleine mer ;</li>
+      <li><b>PM + 45 min</b> — 45 minutes après la pleine mer.</li>
+    </ul>
+    <p>Une manœuvre supplémentaire peut être exceptionnellement autorisée par la Capitainerie
+    en cas de nécessité impérieuse, ou pour un navire de commerce dont les contraintes
+    d'exploitation ne sont pas compatibles avec ces créneaux.</p>
 
-  <p class="note">Trajet quai de la Cale → bassin de Paris (BVC) : viser en priorité les créneaux sur marée.
-  Les heures de pleine mer affichées proviennent des prédictions SHOM (2026) ou du modèle harmonique validé (2027-2028).</p>
+    <h4 class="g">2 · Ouvertures à horaires fixes</h4>
+    <p>Réalisées uniquement si des navires se présentent :</p>
+    <ul>
+      <li><b>07 h 30</b> ;</li>
+      <li><b>18 h 30</b>.</li>
+    </ul>
+
+    <h4 class="o">3 · Ouvertures exceptionnelles</h4>
+    <p>En cas de contrainte technique, de dégradation imprévisible des conditions de mer ou de
+    force majeure :</p>
+    <ul>
+      <li><b>11 h 30</b> ;</li>
+      <li><b>15 h 30</b>.</li>
+    </ul>
+    <p>Ces créneaux sont réservés aux navires EMDT lorsque les horaires liés à la marée ne
+    permettent pas leur passage.</p>
+
+    <h4>4 · Dispositions particulières</h4>
+    <p>Les horaires peuvent être adaptés, ou des manœuvres complémentaires autorisées, à
+    l'occasion de manifestations ou de besoins exceptionnels, après accord de la Capitainerie
+    et de l'Autorité portuaire. Pour toute demande particulière : <b>VHF 12</b>.</p>
+  </details>
+
+  <p class="note">Les heures de pleine mer affichées proviennent des prédictions SHOM (2026)
+  ou du modèle harmonique validé (2027-2028).</p>
+</dialog>
+
+<dialog id="suggestDlg" aria-labelledby="suggestTitle">
+  <button class="dlg-close" id="suggestClose" type="button">Fermer ✕</button>
+  <h2 id="suggestTitle">Proposer une amélioration</h2>
+  <p class="src">Une donnée manquante, un affichage à revoir, un besoin propre à votre activité ?
+  Décrivez-le : votre messagerie s'ouvrira avec le message prêt à partir.</p>
+
+  <label class="champ" for="suggestQui">Votre nom ou navire <span>(facultatif)</span></label>
+  <input class="champ-saisie" type="text" id="suggestQui" autocomplete="name">
+
+  <label class="champ" for="suggestTexte">Votre suggestion</label>
+  <textarea class="champ-saisie" id="suggestTexte" rows="5"></textarea>
+
+  <p class="champ-erreur" id="suggestErreur" hidden>Décrivez votre suggestion avant d'envoyer.</p>
+
+  <div class="dlg-actions">
+    <button type="button" class="btn-discret" id="suggestCopier">Copier l'adresse</button>
+    <button type="button" class="btn-plein" id="suggestEnvoyer">Ouvrir le message</button>
+  </div>
 </dialog>
 
 <script>
@@ -785,6 +899,76 @@ $("datePick").addEventListener("change", e => {
 $("rulesBtn").addEventListener("click", () => $("rulesDlg").showModal());
 $("rulesClose").addEventListener("click", () => $("rulesDlg").close());
 $("rulesDlg").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+// ---- suggestions ----
+// Adresse assemblée à l'exécution : elle n'apparaît pas en clair dans la page.
+const DESTINATAIRE = ["routhiau.quentin", "gmail.com"].join("@");
+
+$("suggestBtn").addEventListener("click", () => {
+  $("suggestErreur").hidden = true;
+  $("suggestDlg").showModal();
+  $("suggestTexte").focus();
+});
+$("suggestClose").addEventListener("click", () => $("suggestDlg").close());
+$("suggestDlg").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+$("suggestEnvoyer").addEventListener("click", () => {
+  const texte = $("suggestTexte").value.trim();
+  if (!texte) {
+    $("suggestErreur").hidden = false;
+    $("suggestTexte").focus();
+    return;
+  }
+  const qui = $("suggestQui").value.trim();
+  const corps = texte + (qui ? "\n\n— " + qui : "") +
+    "\n\n(envoyé depuis le site des ouvertures du pont Colbert)";
+  location.href = "mailto:" + DESTINATAIRE +
+    "?subject=" + encodeURIComponent("Pont Colbert — suggestion") +
+    "&body=" + encodeURIComponent(corps);
+  $("suggestDlg").close();
+});
+
+$("suggestCopier").addEventListener("click", async () => {
+  const btn = $("suggestCopier");
+  const initial = "Copier l'adresse";
+  try {
+    await navigator.clipboard.writeText(DESTINATAIRE);
+    btn.textContent = "Adresse copiée";
+  } catch (e) {
+    btn.textContent = DESTINATAIRE;
+  }
+  setTimeout(() => { btn.textContent = initial; }, 2500);
+});
+
+// ---- fréquentation ----
+// Deux compteurs publics : « visites » à chaque ouverture de la page, « visiteurs »
+// une seule fois par navigateur. Si le service ne répond pas, rien ne s'affiche.
+const COMPTEUR = "https://abacus.jasoncameron.dev";
+const ESPACE = "pont-colbert-dieppe";
+
+async function releverCompteur(cle, incrementer) {
+  const r = await fetch(`${COMPTEUR}/${incrementer ? "hit" : "get"}/${ESPACE}/${cle}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(cle + " : " + r.status);
+  const donnees = await r.json();
+  if (typeof donnees.value !== "number") throw new Error(cle + " : réponse inattendue");
+  return donnees.value;
+}
+
+(async () => {
+  const DEJA_VENU = "pc-deja-venu";
+  let premiereVisite = false;
+  try { premiereVisite = !localStorage.getItem(DEJA_VENU); } catch (e) { /* navigation privée */ }
+  try {
+    const [visites, visiteurs] = await Promise.all([
+      releverCompteur("visites", true),
+      releverCompteur("visiteurs", premiereVisite)
+    ]);
+    if (premiereVisite) { try { localStorage.setItem(DEJA_VENU, "1"); } catch (e) {} }
+    $("statVisites").textContent = visites.toLocaleString("fr-FR");
+    $("statVisiteurs").textContent = visiteurs.toLocaleString("fr-FR");
+    $("stats").hidden = false;
+  } catch (e) { /* service indisponible : mieux vaut rien qu'un compteur cassé */ }
+})();
 
 render();
 setInterval(() => { if (current === keyOf(Date.now())) render(); }, 60000);

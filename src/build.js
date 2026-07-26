@@ -46,25 +46,47 @@ let html = fs.readFileSync(path.join(src, 'pont_colbert_template.html'), 'utf8')
 const data = fs.readFileSync(path.join(src, 'dataset.json'), 'utf8');
 
 if (!html.includes('/*__DATA__*/[]')) throw new Error('gabarit : repère __DATA__ introuvable');
-if (!html.includes('__PHOTO_DATA__')) throw new Error('gabarit : repère __PHOTO_DATA__ introuvable');
+for (const marker of ['__PHOTO_DATA__', '__AVIS_PAGE1__', '__AVIS_PAGE2__', '__AVIS_PDF__']) {
+  if (!html.includes(marker)) throw new Error(`gabarit : repère ${marker} introuvable`);
+}
 
 html = html.replace('/*__DATA__*/[]', data);
+
+// --- avis officiel de la capitainerie, affiché derrière le bouton « Règles » ---
+const AVIS_PDF = 'docs/avis-ouverture-pont-colbert.pdf';
+const AVIS_PAGES = ['docs/avis-page-1.jpg', 'docs/avis-page-2.jpg'];
+for (const rel of [AVIS_PDF, ...AVIS_PAGES]) {
+  if (!fs.existsSync(path.join(root, rel))) {
+    throw new Error(`${rel} manquant — relancer : python src/prepare_avis.py "<avis.pdf>"`);
+  }
+}
 
 // --- photos du héro : pont illuminé la nuit, carte postale ancienne le jour ---
 const dataUri = rel => `data:image/jpeg;base64,${fs.readFileSync(path.join(root, rel)).toString('base64')}`;
 
+const SITE = 'https://rthque.github.io/pont-colbert/';
+
 if (fragmentOnly) {
-  // l'hébergeur d'Artifacts n'accepte aucun fichier joint : les deux photos sont
-  // intégrées, en largeur réduite pour que la page reste raisonnable.
-  html = html.replace('__PHOTO_DATA__',
-    `data-nuit="${dataUri(plusPetite(NUIT))}" data-jour="${dataUri(plusPetite(JOUR))}"`);
+  // l'hébergeur d'Artifacts n'accepte aucun fichier joint : photos et pages de l'avis
+  // sont intégrées, en largeur réduite pour que la page reste raisonnable. Le PDF, lui,
+  // ne peut pas l'être : le lien pointe vers le site publié.
+  html = html
+    .replace('__PHOTO_DATA__',
+      `data-nuit="${dataUri(plusPetite(NUIT))}" data-jour="${dataUri(plusPetite(JOUR))}"`)
+    .replace('__AVIS_PAGE1__', dataUri(AVIS_PAGES[0]))
+    .replace('__AVIS_PAGE2__', dataUri(AVIS_PAGES[1]))
+    .replace('__AVIS_PDF__', SITE + AVIS_PDF);
 } else {
   const attr = (nom, v) => `data-${nom}="${plusGrande(v)}"` +
     (v.length > 1 ? ` data-${nom}-srcset="${srcset(v)}"` : '');
-  html = html.replace('__PHOTO_DATA__', `${attr('nuit', NUIT)} ${attr('jour', JOUR)}`);
+  html = html
+    .replace('__PHOTO_DATA__', `${attr('nuit', NUIT)} ${attr('jour', JOUR)}`)
+    .replace('__AVIS_PAGE1__', AVIS_PAGES[0])
+    .replace('__AVIS_PAGE2__', AVIS_PAGES[1])
+    .replace('__AVIS_PDF__', AVIS_PDF);
 }
 
-if (/__(DATA|PHOTO_DATA)__/.test(html)) throw new Error('un repère est resté dans la sortie');
+if (/__(DATA|PHOTO_DATA|AVIS_PAGE1|AVIS_PAGE2|AVIS_PDF)__/.test(html)) throw new Error('un repère est resté dans la sortie');
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);
@@ -157,7 +179,8 @@ fs.writeFileSync(out, doc);
 
 // vérifications de sortie
 for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">',
-  plusGrande(NUIT), plusGrande(JOUR), 'id="themeBtn"', '</body>', '</html>']) {
+  plusGrande(NUIT), plusGrande(JOUR), AVIS_PDF, AVIS_PAGES[0],
+  'id="themeBtn"', 'id="suggestBtn"', 'id="stats"', '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
