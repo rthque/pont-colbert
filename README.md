@@ -83,9 +83,13 @@ src/
 
 ## Photos du héro
 
-Deux photos, choisies selon le thème : le pont illuminé la nuit en thème sombre, une
-carte postale ancienne colorisée en thème clair. Un bouton soleil/lune posé sur la photo
-force un thème et mémorise le choix ; sans choix, la préférence du système s'applique.
+Deux photos, choisies selon le thème : le pont illuminé la nuit en thème sombre, une vue
+de jour en thème clair. Un bouton soleil/lune posé sur la photo force un thème et
+mémorise le choix ; sans choix, la préférence du système s'applique.
+
+La vue de jour actuelle est une image de synthèse produite par un générateur d'images.
+Elle représente un lieu réel : si le site doit faire foi, mieux vaut la remplacer par une
+photographie authentique.
 
 Les adresses des photos vivent dans des attributs `data` et sont posées par script avant
 la première peinture. C'est délibéré : l'analyseur spéculatif du navigateur lit le HTML
