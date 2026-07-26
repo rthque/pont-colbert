@@ -27,9 +27,7 @@ let html = fs.readFileSync(path.join(src, 'pont_colbert_template.html'), 'utf8')
 const data = fs.readFileSync(path.join(src, 'dataset.json'), 'utf8');
 
 if (!html.includes('/*__DATA__*/[]')) throw new Error('gabarit : repère __DATA__ introuvable');
-for (const marker of ['__PHOTO_SRC__', '__PHOTO_SRCSET__', '__PHOTO_JOUR_SRCSET__']) {
-  if (!html.includes(marker)) throw new Error(`gabarit : repère ${marker} introuvable`);
-}
+if (!html.includes('__PHOTO_DATA__')) throw new Error('gabarit : repère __PHOTO_DATA__ introuvable');
 
 html = html.replace('/*__DATA__*/[]', data);
 
@@ -44,18 +42,15 @@ const dataUri = rel => `data:image/jpeg;base64,${fs.readFileSync(path.join(root,
 if (fragmentOnly) {
   // l'hébergeur d'Artifacts n'accepte aucun fichier joint : les deux photos sont
   // intégrées, en largeur réduite pour que la page reste raisonnable.
-  html = html
-    .replace('__PHOTO_SRC__', dataUri(NUIT_SMALL))
-    .replace(' __PHOTO_SRCSET__', '')
-    .replace('__PHOTO_JOUR_SRCSET__', `srcset="${dataUri(JOUR_SMALL)}"`);
+  html = html.replace('__PHOTO_DATA__',
+    `data-nuit="${dataUri(NUIT_SMALL)}" data-jour="${dataUri(JOUR_SMALL)}"`);
 } else {
-  html = html
-    .replace('__PHOTO_SRC__', NUIT_LARGE)
-    .replace('__PHOTO_SRCSET__', `srcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" sizes="${SIZES}"`)
-    .replace('__PHOTO_JOUR_SRCSET__', `srcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w" sizes="${SIZES}"`);
+  html = html.replace('__PHOTO_DATA__',
+    `data-nuit="${NUIT_LARGE}" data-nuit-srcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" ` +
+    `data-jour="${JOUR_LARGE}" data-jour-srcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w"`);
 }
 
-if (/__(DATA|PHOTO_SRC|PHOTO_SRCSET|PHOTO_JOUR_SRCSET)__/.test(html)) throw new Error('un repère est resté dans la sortie');
+if (/__(DATA|PHOTO_DATA)__/.test(html)) throw new Error('un repère est resté dans la sortie');
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);
@@ -153,7 +148,9 @@ for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-
 }
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
 if ((doc.match(/<body/g) || []).length !== 1) throw new Error('sortie : <body> en double');
-if ((doc.match(/<picture>/g) || []).length !== 1) throw new Error('sortie : <picture> attendu une seule fois');
+// aucune adresse de photo ne doit être atteignable par l'analyseur spéculatif
+if (/<img[^>]*class="hero-photo"[^>]*\ssrc=/.test(doc)) throw new Error('sortie : la photo du héro ne doit pas porter de src statique');
+if (/<img[^>]*class="hero-photo"[^>]*\ssrcset=/.test(doc)) throw new Error('sortie : la photo du héro ne doit pas porter de srcset statique');
 
 console.log('index.html reconstruit :', Math.round(fs.statSync(out).size / 1024),
   'Ko | viewport OK | 2 photos liées | bascule de thème');

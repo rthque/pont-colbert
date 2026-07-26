@@ -349,25 +349,28 @@
   </div>
 
   <header class="hero">
-    <picture>
-      <source id="heroDaySrc" media="(prefers-color-scheme: light)" __PHOTO_JOUR_SRCSET__>
-      <script>
-        /* Applique le thème mémorisé avant que l'image ne soit analysée : évite le
-           passage éclair d'un thème à l'autre et le téléchargement de la mauvaise photo. */
-        (function () {
-          try {
-            var t = localStorage.getItem('pc-theme');
-            if (t === 'light' || t === 'dark') {
-              document.documentElement.dataset.theme = t;
-              document.getElementById('heroDaySrc').media = (t === 'light' ? 'all' : 'not all');
-            }
-          } catch (e) { /* stockage indisponible : on garde la préférence système */ }
-        })();
-      </script>
-      <img class="hero-photo" src="__PHOTO_SRC__" __PHOTO_SRCSET__
-           width="1195" height="761" fetchpriority="high" decoding="async"
-           alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
-    </picture>
+    <!-- Les adresses des photos restent dans des attributs data : sans cela, l'analyseur
+         spéculatif du navigateur télécharge la photo correspondant à la préférence du
+         système avant même qu'un thème forcé ait pu être pris en compte. -->
+    <img class="hero-photo" id="heroPhoto" __PHOTO_DATA__ sizes="(max-width: 600px) 100vw, 560px"
+         width="1195" height="761" fetchpriority="high" decoding="async"
+         alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
+    <script>
+      /* Choisit la photo avant la première peinture : carte postale ancienne en thème
+         clair, pont illuminé en thème sombre. Le thème mémorisé prime sur le système. */
+      (function () {
+        try {
+          var t = null;
+          try { t = localStorage.getItem('pc-theme'); } catch (e) {}
+          if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+          else t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          var img = document.getElementById('heroPhoto'), clair = t === 'light';
+          var jeu = clair ? img.dataset.jourSrcset : img.dataset.nuitSrcset;
+          if (jeu) img.srcset = jeu;
+          img.src = clair ? img.dataset.jour : img.dataset.nuit;
+        } catch (e) { /* au pire, la photo est posée plus tard par le script principal */ }
+      })();
+    </script>
     <button class="theme-toggle" id="themeBtn" type="button" aria-label="Changer de thème"></button>
     <div class="hero-content">
       <div class="titles">
@@ -639,8 +642,18 @@ const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   '<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"/></svg>';
 const ALT_NUIT = "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue";
 const ALT_JOUR = "Carte postale ancienne colorisée du pont Colbert à Dieppe, sa travée en arc au-dessus du chenal, les falaises et le quartier du Pollet en arrière-plan";
-const daySrc = $("heroDaySrc");
+const heroPhoto = $("heroPhoto");
 const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
+
+// pose la photo correspondant au thème (les adresses vivent dans les attributs data)
+function majPhotoHero(theme) {
+  if (!heroPhoto) return;
+  const clair = theme === "light";
+  const jeu = clair ? heroPhoto.dataset.jourSrcset : heroPhoto.dataset.nuitSrcset;
+  const cible = clair ? heroPhoto.dataset.jour : heroPhoto.dataset.nuit;
+  if (jeu) heroPhoto.srcset = jeu; else heroPhoto.removeAttribute("srcset");
+  if (cible && heroPhoto.getAttribute("src") !== cible) heroPhoto.src = cible;
+}
 
 function themeActuel() {
   const force = document.documentElement.dataset.theme;
@@ -654,8 +667,7 @@ function majBoutonTheme() {
   btn.innerHTML = actuel === "dark" ? ICON_SUN : ICON_MOON;
   btn.setAttribute("aria-label", "Passer au thème " + cible);
   btn.title = "Passer au thème " + cible;
-  const img = document.querySelector(".hero-photo");
-  if (img) img.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
+  if (heroPhoto) heroPhoto.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
 }
 
 // aligne la couleur de la barre du navigateur sur le thème forcé
@@ -668,15 +680,21 @@ function majCouleurBarre(theme) {
 
 function appliquerTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+  majPhotoHero(theme);
   majCouleurBarre(theme);
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* stockage indisponible */ }
   majBoutonTheme();
 }
 
 $("themeBtn").addEventListener("click", () => appliquerTheme(themeActuel() === "dark" ? "light" : "dark"));
-prefersLight.addEventListener("change", () => { if (!document.documentElement.dataset.theme) majBoutonTheme(); });
+// sans choix mémorisé, on suit le système, y compris s'il bascule pendant la consultation
+prefersLight.addEventListener("change", () => {
+  if (document.documentElement.dataset.theme) return;
+  majPhotoHero(themeActuel());
+  majBoutonTheme();
+});
 if (document.documentElement.dataset.theme) majCouleurBarre(document.documentElement.dataset.theme);
+majPhotoHero(themeActuel());
 majBoutonTheme();
 
 // ---- webcam ----
