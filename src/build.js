@@ -41,8 +41,44 @@ function variantes(prefixe) {
   return trouvees;
 }
 
+// Dimensions réelles d'un JPEG, lues dans son marqueur SOF.
+function dimensions(rel) {
+  const buf = fs.readFileSync(path.join(root, rel));
+  let i = 2; // après le marqueur de début d'image
+  while (i + 9 < buf.length) {
+    if (buf[i] !== 0xFF) { i++; continue; }
+    const marqueur = buf[i + 1];
+    const porteLesDimensions = marqueur >= 0xC0 && marqueur <= 0xCF
+      && ![0xC4, 0xC8, 0xCC].includes(marqueur);
+    if (porteLesDimensions) {
+      return { hauteur: buf.readUInt16BE(i + 5), largeur: buf.readUInt16BE(i + 7) };
+    }
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  throw new Error(`${rel} : dimensions JPEG introuvables`);
+}
+
 const NUIT = variantes('pont-nuit');
 const JOUR = variantes('pont-jour');
+
+// Les deux photos sont cadrées à l'identique, et le héro compte là-dessus : object-fit:
+// cover recadre selon le rapport de l'image, si bien que deux rapports différents font
+// sauter le pont d'une position à l'autre au changement de thème, d'un écart qui varie
+// avec la taille de l'écran. La contrainte est vérifiée ici plutôt que constatée à l'œil.
+if (NUIT.length !== JOUR.length) {
+  throw new Error(`photos : ${NUIT.length} variantes de nuit contre ${JOUR.length} de jour`);
+}
+NUIT.forEach((nuit, i) => {
+  const jour = JOUR[i];
+  const dn = dimensions(nuit.rel);
+  const dj = dimensions(jour.rel);
+  if (dn.largeur !== dj.largeur || dn.hauteur !== dj.hauteur) {
+    throw new Error(
+      `cadrage : ${nuit.rel} fait ${dn.largeur}x${dn.hauteur} et ${jour.rel} ${dj.largeur}x${dj.hauteur} — ` +
+      'les deux photos doivent avoir exactement les mêmes dimensions'
+    );
+  }
+});
 const plusGrande = v => v[v.length - 1].rel;
 const plusPetite = v => v[0].rel;
 const srcset = v => v.map(x => `${x.rel} ${x.largeur}w`).join(', ');
@@ -90,6 +126,15 @@ if (fragmentOnly) {
 }
 
 if (/__(DATA|PHOTO_DATA|AVIS_PAGE1|AVIS_PAGE2|AVIS_PDF)__/.test(html)) throw new Error('un repère est resté dans la sortie');
+// les dimensions déclarées réservent la place du héro avant le chargement : fausses,
+// la page sursaute au premier affichage
+const balise = html.match(/<img[^>]*class="hero-photo"[^>]*>/);
+if (!balise) throw new Error('gabarit : la photo du héro est introuvable');
+const reelles = dimensions(plusGrande(NUIT));
+if (!balise[0].includes(`width="${reelles.largeur}"`) || !balise[0].includes(`height="${reelles.hauteur}"`)) {
+  throw new Error(`gabarit : déclarer la photo du héro en ${reelles.largeur}x${reelles.hauteur}`);
+}
+
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);

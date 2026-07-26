@@ -416,8 +416,8 @@
          spéculatif du navigateur télécharge la photo correspondant à la préférence du
          système avant même qu'un thème forcé ait pu être pris en compte. -->
     <img class="hero-photo" id="heroPhoto" __PHOTO_DATA__ sizes="(max-width: 600px) 100vw, 560px"
-         width="1195" height="761" fetchpriority="high" decoding="async"
-         alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue">
+         width="1195" height="896" fetchpriority="high" decoding="async"
+         alt="Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue, le front de mer du Pollet éclairé en arrière-plan">
     <script>
       /* Choisit la photo avant la première peinture : carte postale ancienne en thème
          clair, pont illuminé en thème sombre. Le thème mémorisé prime sur le système. */
@@ -754,7 +754,7 @@ const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
   '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.6 12h2.2M19.2 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6"/></svg>';
 const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"/></svg>';
-const ALT_NUIT = "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue";
+const ALT_NUIT = "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue, le front de mer du Pollet éclairé en arrière-plan";
 const ALT_JOUR = "Vue de jour du pont Colbert à Dieppe : sa travée en treillis rivetée franchissant le chenal, le bassin de plaisance et les quais du Pollet en arrière-plan";
 const heroPhoto = $("heroPhoto");
 const prefersLight = window.matchMedia("(prefers-color-scheme: light)");

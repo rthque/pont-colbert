@@ -67,7 +67,9 @@ docs/               avis officiel de la capitainerie : PDF et pages en images
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
   prepare_photo.py            recadre une photo et produit les largeurs voulues
+  efface_titre.py             reconstruit le ciel sous le titre incrusté de la photo de nuit
   prepare_avis.py             copie l'avis PDF et en rend les pages en images
+  publish.js                  assemble public/ : les seuls fichiers à mettre en ligne
   dataset.json                marées 2026-2028 : [minutesUTC, hauteurCm, pleineMer, coeff, prédit]
   build.js                    assemble gabarit + photo + données, ajoute l'en-tête HTML → index.html
   harmonic.js                 analyse et prédiction harmonique de la marée
@@ -105,10 +107,29 @@ node src/build.js
 ```
 
 `--nom` vaut `pont-jour` ou `pont-nuit`. `--haut` et `--bas` retirent une bande de texte
-incrustée (le titre de la photo de nuit, la légende de la carte postale). Les fichiers
-sont nommés d'après leur largeur réelle — jamais d'agrandissement — et le build les
-découvre dans `assets/` pour en tirer un `srcset` exact.
+incrustée. Les fichiers sont nommés d'après leur largeur réelle — jamais d'agrandissement
+— et le build les découvre dans `assets/` pour en tirer un `srcset` exact.
 Nécessite Pillow : `python -m pip install --user pillow`.
+
+**Les deux photos doivent avoir exactement les mêmes dimensions** (aujourd'hui 1195x896 et
+760x570). `object-fit: cover` recadre selon le rapport de l'image : deux rapports
+différents font sauter le pont d'une position à l'autre au changement de thème, d'un écart
+qui varie en plus avec la taille de l'écran. `build.js` lit les dimensions dans les
+fichiers et refuse de construire si elles diffèrent.
+
+C'est cette contrainte qui interdit de rogner le titre incrusté en haut de la photo
+nocturne : le rogner emporterait le front de mer, joli de nuit, et changerait le rapport.
+Le titre est donc reconstruit plutôt que rogné :
+
+```bash
+python src/efface_titre.py chemin/vers/photo-nuit-originale.jpg -s propre.jpg
+python src/prepare_photo.py propre.jpg --nom pont-nuit --largeurs 1195 760
+```
+
+`efface_titre.py` repère les pixels qui s'écartent du ciel local puis rebouche la zone en
+résolvant une équation de Laplace, les pixels conservés servant de conditions aux limites.
+Les repères de la photo actuelle sont dans le fichier : texte sur les lignes 87 à 108,
+toits à partir de la ligne 109. Nécessite NumPy : `python -m pip install --user numpy`.
 
 ## Modifier le site
 
