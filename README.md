@@ -29,14 +29,45 @@ semaines tirées entre 2012 et 2024 (validation du cycle nodal de 18,6 ans) : 2 
 Les coefficients 2027–2028 sont estimés par régression sur le marnage (±3), et
 affichés avec le signe « ≈ ».
 
+## Avis officiel
+
+Le bouton « Règles » affiche l'avis aux usagers de la Capitainerie du port de Dieppe
+(8 juillet 2026). Il est rendu en images, seul format qui s'affiche de façon fiable dans
+une fenêtre sur tous les téléphones, avec le PDF d'origine en un lien et une version
+texte repliable pour la lecture d'écran et le copier-coller.
+
+Pour publier un nouvel avis :
+
+```bash
+python src/prepare_avis.py "chemin/vers/nouvel-avis.pdf"
+node src/build.js
+```
+
+Si les créneaux eux-mêmes changent, penser à mettre à jour `eventsFor()` dans le gabarit
+et la version texte de la fenêtre.
+
+## Fréquentation et suggestions
+
+Deux compteurs publics, servis par [Abacus](https://abacus.jasoncameron.dev) (gratuit,
+sans inscription) dans l'espace `pont-colbert-dieppe` : `visites` est incrémenté à chaque
+ouverture de la page, `visiteurs` une seule fois par navigateur, au moyen d'un témoin
+dans le stockage local. Si le service ne répond pas, le bloc reste masqué plutôt que
+d'afficher un compteur cassé. Les clés d'administration permettant de remettre les
+compteurs à zéro sont dans `CLES-ADMIN.txt`, exclu du dépôt.
+
+Le bouton « Proposer une amélioration » compose un courriel prérempli. L'adresse est
+assemblée à l'exécution et n'apparaît donc pas en clair dans le source de la page.
+
 ## Structure
 
 ```
 index.html          le site
-assets/             photo du héro, deux largeurs (mobile / grand écran)
+assets/             photos du héro (jour et nuit), deux largeurs chacune
+docs/               avis officiel de la capitainerie : PDF et pages en images
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
-  prepare_photo.py            recadre la photo d'origine et produit les deux largeurs
+  prepare_photo.py            recadre une photo et produit les largeurs voulues
+  prepare_avis.py             copie l'avis PDF et en rend les pages en images
   dataset.json                marées 2026-2028 : [minutesUTC, hauteurCm, pleineMer, coeff, prédit]
   build.js                    assemble gabarit + photo + données, ajoute l'en-tête HTML → index.html
   harmonic.js                 analyse et prédiction harmonique de la marée
