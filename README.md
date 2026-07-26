@@ -32,12 +32,13 @@ affichés avec le signe « ≈ ».
 ## Structure
 
 ```
-index.html          le site complet (autonome, aucune dépendance externe)
+index.html          le site
+assets/             photo du héro, deux largeurs (mobile / grand écran)
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
-  bridge.svg.html             silhouette du pont (treillis, pivot, flèche de rotation)
+  prepare_photo.py            recadre la photo d'origine et produit les deux largeurs
   dataset.json                marées 2026-2028 : [minutesUTC, hauteurCm, pleineMer, coeff, prédit]
-  build.js                    assemble gabarit + pont + données, ajoute l'en-tête HTML → index.html
+  build.js                    assemble gabarit + photo + données, ajoute l'en-tête HTML → index.html
   harmonic.js                 analyse et prédiction harmonique de la marée
   fit_predict2.js             ajuste le modèle sur les données SHOM et le valide
   gen_dataset.js              produit dataset.json (données exactes + prédictions)
@@ -45,7 +46,20 @@ src/
   parse_mi2.js                extrait les marées officielles des pages maree.info
   test_page_logic.js          vérifie la logique des créneaux sur les 915 jours
   model.json, extra.json      coefficients du modèle harmonique ajusté
+  bridge.svg.html, gen_bridge.js   ancienne silhouette dessinée du pont, conservée
+                                   pour mémoire ; plus utilisée depuis le héro photo
 ```
+
+## Changer la photo du héro
+
+```bash
+python src/prepare_photo.py chemin/vers/photo.jpg
+node src/build.js
+```
+
+Le script retire la bande supérieure de l'image (`CROP_TOP` dans le fichier, à ajuster
+selon la photo) et écrit `assets/pont-nuit-1200.jpg` et `assets/pont-nuit-760.jpg`.
+Nécessite Pillow : `python -m pip install --user pillow`.
 
 ## Modifier le site
 

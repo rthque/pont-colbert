@@ -1,13 +1,14 @@
-// Reconstruit index.html à partir du gabarit, du dessin du pont et des données de marée.
+// Reconstruit index.html à partir du gabarit, de la photo du héro et des données de marée.
 //
 // Usage :
-//   node src/build.js              → index.html, document HTML complet (site GitHub Pages)
-//   node src/build.js --fragment   → src/artifact.html, sans <html>/<head> (publication Artifact)
+//   node src/build.js              → index.html, document complet, photo en fichier séparé
+//   node src/build.js --fragment   → src/artifact.html, sans <html>/<head>, photo en base64
 //
-// Le gabarit est un fragment (il commence par <title> puis <style>) : c'est le format
-// attendu par l'hébergeur d'Artifacts, qui ajoute lui-même l'enveloppe HTML. Servi tel
-// quel par un hébergeur classique, ce fragment n'a pas de balise viewport et les mobiles
-// le rendent sur 980 px de large puis dézooment — d'où l'enveloppe ajoutée ici.
+// Le gabarit est un fragment (il commence par <title>) : c'est le format attendu par
+// l'hébergeur d'Artifacts, qui ajoute lui-même l'enveloppe HTML et n'accepte aucun
+// fichier joint — d'où la photo intégrée en base64 dans ce mode. Servi tel quel par un
+// hébergeur classique, ce fragment n'aurait pas de balise viewport et les mobiles le
+// rendraient sur 980 px de large puis dézoomeraient : d'où l'enveloppe ajoutée ici.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -16,16 +17,34 @@ const src = __dirname;
 const root = path.join(src, '..');
 const fragmentOnly = process.argv.includes('--fragment');
 
+const PHOTO_LARGE = 'assets/pont-nuit-1200.jpg';
+const PHOTO_SMALL = 'assets/pont-nuit-760.jpg';
+
 let html = fs.readFileSync(path.join(src, 'pont_colbert_template.html'), 'utf8');
-const bridge = fs.readFileSync(path.join(src, 'bridge.svg.html'), 'utf8');
 const data = fs.readFileSync(path.join(src, 'dataset.json'), 'utf8');
 
-if (!html.includes('<!--__BRIDGE__-->')) throw new Error('gabarit : repère __BRIDGE__ introuvable');
 if (!html.includes('/*__DATA__*/[]')) throw new Error('gabarit : repère __DATA__ introuvable');
+if (!html.includes('__PHOTO_SRC__')) throw new Error('gabarit : repère __PHOTO_SRC__ introuvable');
 
-html = html.replace('<!--__BRIDGE__-->', bridge).replace('/*__DATA__*/[]', data);
+html = html.replace('/*__DATA__*/[]', data);
 
-if (/__(DATA|BRIDGE)__/.test(html)) throw new Error('un repère est resté dans la sortie');
+// --- photo du héro ---
+for (const rel of [PHOTO_LARGE, PHOTO_SMALL]) {
+  if (!fs.existsSync(path.join(root, rel))) {
+    throw new Error(`${rel} manquant — relancer : python src/prepare_photo.py <image_source>`);
+  }
+}
+
+if (fragmentOnly) {
+  const b64 = fs.readFileSync(path.join(root, PHOTO_LARGE)).toString('base64');
+  html = html.replace('__PHOTO_SRC__', `data:image/jpeg;base64,${b64}`).replace(' __PHOTO_SRCSET__', '');
+} else {
+  const srcset = `srcset="${PHOTO_SMALL} 760w, ${PHOTO_LARGE} 1195w" ` +
+    `sizes="(max-width: 600px) 100vw, 560px"`;
+  html = html.replace('__PHOTO_SRC__', PHOTO_LARGE).replace('__PHOTO_SRCSET__', srcset);
+}
+
+if (/__(DATA|PHOTO_SRC|PHOTO_SRCSET)__/.test(html)) throw new Error('un repère est resté dans la sortie');
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);
@@ -33,7 +52,7 @@ if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens
 if (fragmentOnly) {
   const out = path.join(src, 'artifact.html');
   fs.writeFileSync(out, html);
-  console.log('artifact.html (fragment) :', fs.statSync(out).size, 'octets |', opens, 'SVG');
+  console.log('artifact.html (fragment, photo intégrée) :', Math.round(fs.statSync(out).size / 1024), 'Ko');
   return;
 }
 
@@ -76,6 +95,8 @@ const doc = `<!doctype html>
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
+<meta property="og:image" content="${PHOTO_LARGE}">
+<link rel="preload" as="image" href="${PHOTO_LARGE}" imagesrcset="${PHOTO_SMALL} 760w, ${PHOTO_LARGE} 1195w" imagesizes="(max-width: 600px) 100vw, 560px">
 <link rel="icon" href="${favicon}">
 <link rel="apple-touch-icon" href="${favicon}">
 ${style}
@@ -90,10 +111,10 @@ const out = path.join(root, 'index.html');
 fs.writeFileSync(out, doc);
 
 // vérifications de sortie
-for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">', '</body>', '</html>']) {
+for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-8">', PHOTO_LARGE, '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
 if ((doc.match(/<body/g) || []).length !== 1) throw new Error('sortie : <body> en double');
 
-console.log('index.html reconstruit :', fs.statSync(out).size, 'octets |', opens, 'SVG | viewport OK');
+console.log('index.html reconstruit :', Math.round(fs.statSync(out).size / 1024), 'Ko | viewport OK | photo liée');
