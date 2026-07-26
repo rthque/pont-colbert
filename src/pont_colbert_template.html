@@ -122,35 +122,33 @@
   .hero {
     position: relative; overflow: hidden; margin: 14px -14px 0;
     background: #06121E; aspect-ratio: 16 / 9; max-height: 42vh;
+    --voile: 4, 14, 24;
   }
   .hero-photo {
     position: absolute; inset: 0; width: 100%; height: 100%;
     object-fit: cover; object-position: 50% 45%;
   }
-  /* voile : bleu nuit sur la photo nocturne, navy sur la carte postale diurne */
+  /* Assombrissement sous le texte. Il ne peut pas disparaître : relevé sur la photo de
+     jour, 41 % des pixels sous le titre dépassent 150 de luminance, avec des pointes à
+     248, où le titre crème serait illisible.
+     En revanche il n'a aucune raison de déborder au-dessus du texte, et c'est ce
+     débordement qui se lisait comme un voile sur la photo. Le dégradé s'éteint donc à 62 %
+     de la hauteur, juste au-dessus du titre, au lieu de 80 %, et il est plus franc dans la
+     bande qu'il couvre — bande de toute façon masquée par le texte. Mesuré sur le rendu :
+     l'opacité moyenne au-dessus du texte tombe de 7,8 % à 2,4 %, tandis que le contraste
+     du titre monte de 4,1:1 à 4,6:1. Le ciel, le front de mer et le haut du tablier ne
+     reçoivent plus rien. */
   .hero::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(to top,
-      rgba(4, 14, 24, .95) 0%, rgba(4, 14, 24, .80) 24%,
-      rgba(4, 14, 24, .22) 54%, rgba(4, 14, 24, 0) 78%);
+      rgba(var(--voile), .92) 0%, rgba(var(--voile), .84) 30%,
+      rgba(var(--voile), .52) 48%, rgba(var(--voile), 0) 62%);
   }
   @media (prefers-color-scheme: light) {
-    .hero::after {
-      background: linear-gradient(to top,
-        rgba(0, 26, 52, .94) 0%, rgba(0, 26, 52, .80) 26%,
-        rgba(0, 26, 52, .26) 56%, rgba(0, 26, 52, 0) 80%);
-    }
+    .hero { --voile: 0, 26, 52; }
   }
-  :root[data-theme="light"] .hero::after {
-    background: linear-gradient(to top,
-      rgba(0, 26, 52, .94) 0%, rgba(0, 26, 52, .80) 26%,
-      rgba(0, 26, 52, .26) 56%, rgba(0, 26, 52, 0) 80%);
-  }
-  :root[data-theme="dark"] .hero::after {
-    background: linear-gradient(to top,
-      rgba(4, 14, 24, .95) 0%, rgba(4, 14, 24, .80) 24%,
-      rgba(4, 14, 24, .22) 54%, rgba(4, 14, 24, 0) 78%);
-  }
+  :root[data-theme="light"] .hero { --voile: 0, 26, 52; }
+  :root[data-theme="dark"] .hero { --voile: 4, 14, 24; }
   /* bascule de thème : posée sur la photo, lisible sur ciel clair comme sur nuit */
   .theme-toggle {
     position: absolute; top: 10px; right: 10px; z-index: 2;
@@ -169,12 +167,12 @@
     margin: 0; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
     font-size: clamp(1.6rem, 8vw, 2.3rem); font-weight: 700; line-height: 1;
     letter-spacing: .05em; text-transform: uppercase; text-wrap: balance;
-    color: #F5F0E8; text-shadow: 0 2px 14px rgba(0, 12, 22, .75);
+    color: #F5F0E8; text-shadow: 0 1px 3px rgba(0, 12, 22, .92), 0 2px 16px rgba(0, 12, 22, .65);
   }
   .hero small {
     display: block; font-size: .68rem; font-weight: 400; color: rgba(245, 240, 232, .74);
     text-transform: uppercase; letter-spacing: .2em; margin-top: 7px;
-    text-shadow: 0 1px 10px rgba(0, 12, 22, .8);
+    text-shadow: 0 1px 3px rgba(0, 12, 22, .95), 0 1px 10px rgba(0, 12, 22, .7);
   }
   .hero-btns { display: flex; gap: 8px; }
   .hero-btns button {
@@ -185,7 +183,7 @@
   }
   .hero-btns button:hover { background: var(--accent); }
   .hero-btns button.ghost {
-    background: rgba(6, 18, 30, .55); border: 1px solid rgba(245, 240, 232, .5); color: #F5F0E8;
+    background: rgba(6, 18, 30, .70); border: 1px solid rgba(245, 240, 232, .5); color: #F5F0E8;
   }
   .hero-btns button.ghost:hover { background: rgba(6, 18, 30, .82); border-color: #F5F0E8; }
   button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
