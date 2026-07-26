@@ -14,8 +14,32 @@
 <meta property="og:description" content="Créneaux d'ouverture du pont tournant Colbert à Dieppe selon la marée, du 1er juillet 2026 au 31 décembre 2028, avec webcam du port en direct.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="assets/pont-nuit-1200.jpg">
-<link rel="preload" as="image" media="(prefers-color-scheme: dark)" href="assets/pont-nuit-1200.jpg" imagesrcset="assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1200.jpg 1195w" imagesizes="(max-width: 600px) 100vw, 560px">
-<link rel="preload" as="image" media="(prefers-color-scheme: light)" href="assets/pont-jour-1200.jpg" imagesrcset="assets/pont-jour-760.jpg 760w, assets/pont-jour-1200.jpg 1200w" imagesizes="(max-width: 600px) 100vw, 560px">
+<script>
+/* Résout le thème avant tout rendu, puis ne précharge que la photo réellement
+   affichée. Un préchargement conditionné par media suivrait la préférence du
+   système et téléchargerait la mauvaise photo quand un thème est forcé. */
+(function () {
+  try {
+    var t = null;
+    try { t = localStorage.getItem('pc-theme'); } catch (e) {}
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.dataset.theme = t;
+    } else {
+      t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    var clair = t === 'light';
+    var l = document.createElement('link');
+    l.rel = 'preload';
+    l.as = 'image';
+    l.href = clair ? 'assets/pont-jour-1200.jpg' : 'assets/pont-nuit-1200.jpg';
+    l.setAttribute('imagesrcset', clair
+      ? 'assets/pont-jour-760.jpg 760w, assets/pont-jour-1200.jpg 1200w'
+      : 'assets/pont-nuit-760.jpg 760w, assets/pont-nuit-1200.jpg 1195w');
+    l.setAttribute('imagesizes', '(max-width: 600px) 100vw, 560px');
+    document.head.appendChild(l);
+  } catch (e) { /* sans script : pas de préchargement, la photo se charge normalement */ }
+})();
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23003366'/%3E%3Cpath d='M7 45h50M7 36q25-16 50 0M15 36v9M25 30v15M39 30v15M49 36v9' stroke='%23F5F0E8' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='45' r='4' fill='%23C44A2A'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23003366'/%3E%3Cpath d='M7 45h50M7 36q25-16 50 0M15 36v9M25 30v15M39 30v15M49 36v9' stroke='%23F5F0E8' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='45' r='4' fill='%23C44A2A'/%3E%3C/svg%3E">
 <style>
@@ -678,19 +702,25 @@ function majBoutonTheme() {
   if (img) img.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
 }
 
-function appliquerTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+// aligne la couleur de la barre du navigateur sur le thème forcé
+function majCouleurBarre(theme) {
   for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
     m.removeAttribute("media");
     m.setAttribute("content", theme === "light" ? "#F5F0E8" : "#112233");
   }
+}
+
+function appliquerTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+  majCouleurBarre(theme);
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* stockage indisponible */ }
   majBoutonTheme();
 }
 
 $("themeBtn").addEventListener("click", () => appliquerTheme(themeActuel() === "dark" ? "light" : "dark"));
 prefersLight.addEventListener("change", () => { if (!document.documentElement.dataset.theme) majBoutonTheme(); });
+if (document.documentElement.dataset.theme) majCouleurBarre(document.documentElement.dataset.theme);
 majBoutonTheme();
 
 // ---- webcam ----

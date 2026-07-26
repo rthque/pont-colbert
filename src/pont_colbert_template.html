@@ -658,19 +658,25 @@ function majBoutonTheme() {
   if (img) img.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
 }
 
-function appliquerTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+// aligne la couleur de la barre du navigateur sur le thème forcé
+function majCouleurBarre(theme) {
   for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
     m.removeAttribute("media");
     m.setAttribute("content", theme === "light" ? "#F5F0E8" : "#112233");
   }
+}
+
+function appliquerTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  if (daySrc) daySrc.media = theme === "light" ? "all" : "not all";
+  majCouleurBarre(theme);
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* stockage indisponible */ }
   majBoutonTheme();
 }
 
 $("themeBtn").addEventListener("click", () => appliquerTheme(themeActuel() === "dark" ? "light" : "dark"));
 prefersLight.addEventListener("change", () => { if (!document.documentElement.dataset.theme) majBoutonTheme(); });
+if (document.documentElement.dataset.theme) majCouleurBarre(document.documentElement.dataset.theme);
 majBoutonTheme();
 
 // ---- webcam ----

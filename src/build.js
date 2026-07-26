@@ -107,8 +107,32 @@ const doc = `<!doctype html>
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
 <meta property="og:image" content="${NUIT_LARGE}">
-<link rel="preload" as="image" media="(prefers-color-scheme: dark)" href="${NUIT_LARGE}" imagesrcset="${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w" imagesizes="${SIZES}">
-<link rel="preload" as="image" media="(prefers-color-scheme: light)" href="${JOUR_LARGE}" imagesrcset="${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w" imagesizes="${SIZES}">
+<script>
+/* Résout le thème avant tout rendu, puis ne précharge que la photo réellement
+   affichée. Un préchargement conditionné par media suivrait la préférence du
+   système et téléchargerait la mauvaise photo quand un thème est forcé. */
+(function () {
+  try {
+    var t = null;
+    try { t = localStorage.getItem('pc-theme'); } catch (e) {}
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.dataset.theme = t;
+    } else {
+      t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    var clair = t === 'light';
+    var l = document.createElement('link');
+    l.rel = 'preload';
+    l.as = 'image';
+    l.href = clair ? '${JOUR_LARGE}' : '${NUIT_LARGE}';
+    l.setAttribute('imagesrcset', clair
+      ? '${JOUR_SMALL} 760w, ${JOUR_LARGE} 1200w'
+      : '${NUIT_SMALL} 760w, ${NUIT_LARGE} 1195w');
+    l.setAttribute('imagesizes', '${SIZES}');
+    document.head.appendChild(l);
+  } catch (e) { /* sans script : pas de préchargement, la photo se charge normalement */ }
+})();
+</script>
 <link rel="icon" href="${favicon}">
 <link rel="apple-touch-icon" href="${favicon}">
 ${style}
