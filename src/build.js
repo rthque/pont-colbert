@@ -22,7 +22,7 @@ const SIZES = '(max-width: 600px) 100vw, 560px';
 // Adresse publique de référence. Le site est servi par deux hébergeurs à partir du même
 // dépôt ; celui-ci est désigné comme canonique pour que les moteurs de recherche et les
 // aperçus de partage n'en retiennent qu'un. Terminer par une barre oblique.
-const SITE = 'https://pont-colbert.pages.dev/';
+const SITE = 'https://pont-colbert.fr/';
 
 // Les variantes sont découvertes dans assets/ : leur nom porte la largeur réelle,
 // produite par prepare_photo.py, ce qui garantit un srcset exact.
