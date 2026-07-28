@@ -1036,33 +1036,77 @@ suggEnvoyer.addEventListener("click", async () => {
 });
 
 // ---- fréquentation ----
-// Deux compteurs publics : « visites » à chaque ouverture de la page, « visiteurs »
-// une seule fois par navigateur. Si le service ne répond pas, rien ne s'affiche.
-const COMPTEUR = "https://abacus.jasoncameron.dev";
-const ESPACE = "pont-colbert-dieppe";
+// Les compteurs sont tenus par /api/frequentation, dans l'espace KV du site. Le serveur
+// écarte le trafic automatique ; on écarte ici, en amont, ce qui ne se voit que depuis le
+// navigateur, et surtout on n'annonce la visite qu'une fois la page réellement regardée.
+// C'est le filtre le plus efficace : un aperçu de lien ou un moissonneur charge la page et
+// s'en va, il n'attend pas et n'interagit pas.
+//
+// L'affichage, lui, est immédiat et sans effet de bord : une lecture au chargement, une
+// annonce plus tard. Un robot voit donc les chiffres sans les gonfler.
+const API_FREQ = "/api/frequentation";
+const DEJA_VENU = "pc-deja-venu";
+const PRESENCE_REQUISE = 2500; // ms passés à l'écran avant de compter la visite
 
-async function releverCompteur(cle, incrementer) {
-  const r = await fetch(`${COMPTEUR}/${incrementer ? "hit" : "get"}/${ESPACE}/${cle}`, { cache: "no-store" });
-  if (!r.ok) throw new Error(cle + " : " + r.status);
-  const donnees = await r.json();
-  if (typeof donnees.value !== "number") throw new Error(cle + " : réponse inattendue");
-  return donnees.value;
+function afficheFrequentation(d) {
+  if (!d || typeof d.visites !== "number" || typeof d.visiteurs !== "number") return;
+  $("statVisites").textContent = d.visites.toLocaleString("fr-FR");
+  $("statVisiteurs").textContent = d.visiteurs.toLocaleString("fr-FR");
+  $("stats").hidden = false;
 }
 
-(async () => {
-  const DEJA_VENU = "pc-deja-venu";
-  let premiereVisite = false;
-  try { premiereVisite = !localStorage.getItem(DEJA_VENU); } catch (e) { /* navigation privée */ }
-  try {
-    const [visites, visiteurs] = await Promise.all([
-      releverCompteur("visites", true),
-      releverCompteur("visiteurs", premiereVisite)
-    ]);
-    if (premiereVisite) { try { localStorage.setItem(DEJA_VENU, "1"); } catch (e) {} }
-    $("statVisites").textContent = visites.toLocaleString("fr-FR");
-    $("statVisiteurs").textContent = visiteurs.toLocaleString("fr-FR");
-    $("stats").hidden = false;
-  } catch (e) { /* service indisponible : mieux vaut rien qu'un compteur cassé */ }
+(function frequentation() {
+  fetch(API_FREQ, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(afficheFrequentation)
+    .catch(() => { /* indisponible : mieux vaut rien qu'un compteur cassé */ });
+
+  // Posé à vrai par les navigateurs pilotés par un automate — le signal le plus franc
+  // dont dispose une page, et que la plupart des moissonneurs ne prennent pas la peine
+  // de masquer.
+  if (navigator.webdriver) return;
+
+  let annoncee = false;
+  async function annoncer() {
+    if (annoncee) return;
+    annoncee = true;
+    cesserDEcouter();
+    clearInterval(minuteur);
+
+    let nouveau = false;
+    try { nouveau = !localStorage.getItem(DEJA_VENU); } catch (e) { /* navigation privée */ }
+    try {
+      const r = await fetch(API_FREQ, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ nouveau })
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      // le témoin n'est posé que si le serveur a bien retenu la visite
+      if (d.compte && nouveau) { try { localStorage.setItem(DEJA_VENU, "1"); } catch (e) {} }
+      afficheFrequentation(d);
+    } catch (e) { /* sans conséquence : les chiffres affichés restent ceux de la lecture */ }
+  }
+
+  const GESTES = ["pointerdown", "keydown", "wheel", "touchstart", "scroll"];
+  const surGeste = () => annoncer();
+  const cesserDEcouter = () => GESTES.forEach(g => removeEventListener(g, surGeste, true));
+  GESTES.forEach(g => addEventListener(g, surGeste, { capture: true, passive: true }));
+
+  // À défaut de geste, un temps de présence suffisant. Seul le temps où la page est
+  // réellement visible est cumulé : un onglet ouvert en arrière-plan ne compte pas.
+  let cumul = 0;
+  let depuis = document.visibilityState === "visible" ? Date.now() : null;
+  const minuteur = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      if (depuis !== null) cumul += Date.now() - depuis;
+      depuis = Date.now();
+    } else {
+      depuis = null;
+    }
+    if (cumul >= PRESENCE_REQUISE) annoncer();
+  }, 500);
 })();
 
 render();

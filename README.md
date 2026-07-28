@@ -48,12 +48,48 @@ et la version texte de la fenêtre.
 
 ## Fréquentation et suggestions
 
-Deux compteurs publics, servis par [Abacus](https://abacus.jasoncameron.dev) (gratuit,
-sans inscription) dans l'espace `pont-colbert-dieppe` : `visites` est incrémenté à chaque
-ouverture de la page, `visiteurs` une seule fois par navigateur, au moyen d'un témoin
-dans le stockage local. Si le service ne répond pas, le bloc reste masqué plutôt que
-d'afficher un compteur cassé. Les clés d'administration permettant de remettre les
-compteurs à zéro sont dans `CLES-ADMIN.txt`, exclu du dépôt.
+Deux compteurs — **visiteurs uniques** et **visites totales** — tenus par
+`functions/api/frequentation.js` dans le même espace KV que les suggestions. Ils ont
+remplacé le service tiers Abacus, qui comptait toute exécution de la page, donc aussi les
+robots sachant rendre du JavaScript, et que quiconque connaissait l'adresse pouvait
+incrémenter.
+
+**Ce qui est conservé : deux entiers.** Aucune adresse IP n'est stockée ni journalisée.
+Pour qu'un rechargement ne compte pas une visite de plus, une empreinte éphémère est
+calculée à partir de l'adresse et du navigateur, salée par un sel aléatoire renouvelé
+chaque jour et effacé au bout de 48 h ; l'empreinte elle-même expire en 30 minutes, durée
+retenue pour une session. Ni cookie, ni identifiant persistant, donc pas de bandeau de
+consentement.
+
+Le filtrage des robots se fait des deux côtés :
+
+| Où | Signal |
+|---|---|
+| Navigateur | `navigator.webdriver`, posé par les navigateurs pilotés par un automate |
+| Navigateur | la visite n'est annoncée qu'après un geste, ou 2,5 s de présence à l'écran — un aperçu de lien charge et s'en va |
+| Serveur | robots déclarés par Cloudflare, score de réputation |
+| Serveur | agent absent, trop court, non conforme à un navigateur, ou se déclarant robot |
+| Serveur | aucune langue annoncée |
+| Serveur | `Sec-Fetch-Site` autre que `same-origin` : la balise n'est émise que par la page |
+
+L'affichage, lui, est une lecture sans effet de bord : un robot voit les chiffres sans les
+gonfler. Le filtrage ne peut pas être parfait — un moissonneur déterminé imite un
+navigateur — mais il écarte le trafic automatique ordinaire, qui est l'essentiel du bruit.
+
+Remise à zéro, avec le jeton de modération :
+
+```bash
+curl -X DELETE https://pont-colbert.fr/api/frequentation -H "Authorization: Bearer <MODERATION_JETON>"
+```
+
+Vérifier la fonction sans déployer :
+
+```bash
+node src/test_frequentation.mjs
+```
+
+Attention au quota : l'offre KV gratuite plafonne à 1 000 écritures par jour. Une visite
+comptée en coûte deux, une visite écartée aucune.
 
 Le bouton « Proposer une amélioration » dépose la proposition sur `/api/suggestions` et
 affiche dans la même fenêtre les propositions déjà reçues. **Le site ne porte aucune
@@ -99,7 +135,8 @@ index.html          le site
 assets/             photos du héro (jour et nuit), deux largeurs chacune
 docs/               avis officiel de la capitainerie : PDF et pages en images
 functions/
-  api/suggestions.js  recueil des propositions (fonction Pages + espace KV)
+  api/suggestions.js   recueil des propositions (fonction Pages + espace KV)
+  api/frequentation.js compteurs de visites, robots écartés
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
   prepare_photo.py            recadre une photo et produit les largeurs voulues
@@ -115,6 +152,7 @@ src/
   parse_mi2.js                extrait les marées officielles des pages maree.info
   test_page_logic.js          vérifie la logique des créneaux sur les 915 jours
   test_suggestions.mjs        vérifie la fonction de recueil, sans déployer
+  test_frequentation.mjs      vérifie les compteurs et le filtrage des robots
   model.json, extra.json      coefficients du modèle harmonique ajusté
   bridge.svg.html, gen_bridge.js   ancienne silhouette dessinée du pont, conservée
                                    pour mémoire ; plus utilisée depuis le héro photo
