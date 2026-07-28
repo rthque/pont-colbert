@@ -403,6 +403,32 @@
   .champ-erreur { color: var(--pm-strong); font-size: .82rem; font-weight: 700; margin: 10px 0 0; }
   .champ-erreur[hidden] { display: none; }
   .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  /* ---- propositions reçues, relues dans la même fenêtre ---- */
+  .leurre { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .sugg-titre {
+    margin: 26px 0 0; padding-top: 16px; border-top: 1px solid var(--line);
+    font: 700 .78rem/1.2 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft);
+  }
+  .sugg-liste { margin-top: 12px; display: grid; gap: 9px; max-height: 42vh; overflow-y: auto; }
+  .sugg { padding: 11px 12px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); }
+  .sugg-meta {
+    margin: 0 0 5px; font-size: .71rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--ink-soft);
+  }
+  /* le texte vient du public : les retours à la ligne sont respectés, et une suite de
+     caractères sans espace est coupée plutôt que d'élargir la fenêtre */
+  .sugg-texte { margin: 0; font-size: .92rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .sugg-vide { margin: 0; color: var(--ink-soft); font-size: .9rem; }
+  .sugg-suppr {
+    margin-top: 8px; padding: 5px 9px; border-radius: 5px; cursor: pointer;
+    background: none; border: 1px solid var(--line); color: var(--ink-soft);
+    font: 700 .68rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .sugg-suppr:hover { border-color: var(--pm-strong); color: var(--pm-strong); }
+  .sugg-suppr:disabled { opacity: .5; cursor: default; }
   .btn-plein {
     background: var(--accent-deep); color: #FFF3EC; border: none; border-radius: 6px;
     padding: 12px 18px; min-height: 44px; cursor: pointer;
@@ -593,20 +619,30 @@
   <button class="dlg-close" id="suggestClose" type="button">Fermer ✕</button>
   <h2 id="suggestTitle">Proposer une amélioration</h2>
   <p class="src">Une donnée manquante, un affichage à revoir, un besoin propre à votre activité ?
-  Décrivez-le : votre messagerie s'ouvrira avec le message prêt à partir.</p>
+  Décrivez-le. Votre proposition rejoindra la liste ci-dessous, que chacun peut lire.
+  N'y mettez rien de confidentiel.</p>
 
   <label class="champ" for="suggestQui">Votre nom ou navire <span>(facultatif)</span></label>
-  <input class="champ-saisie" type="text" id="suggestQui" autocomplete="name">
+  <input class="champ-saisie" type="text" id="suggestQui" autocomplete="off" maxlength="60">
 
   <label class="champ" for="suggestTexte">Votre suggestion</label>
-  <textarea class="champ-saisie" id="suggestTexte" rows="5"></textarea>
+  <textarea class="champ-saisie" id="suggestTexte" rows="5" maxlength="1200"></textarea>
 
-  <p class="champ-erreur" id="suggestErreur" hidden>Décrivez votre suggestion avant d'envoyer.</p>
+  <!-- Leurre : hors écran et hors parcours de tabulation, donc invisible pour un visiteur.
+       Les robots à formulaire le remplissent, ce qui suffit à les écarter côté serveur. -->
+  <div class="leurre" aria-hidden="true">
+    <label for="suggestSite">Ne rien saisir ici</label>
+    <input type="text" id="suggestSite" tabindex="-1" autocomplete="off">
+  </div>
+
+  <p class="champ-erreur" id="suggestErreur" hidden></p>
 
   <div class="dlg-actions">
-    <button type="button" class="btn-discret" id="suggestCopier">Copier l'adresse</button>
-    <button type="button" class="btn-plein" id="suggestEnvoyer">Ouvrir le message</button>
+    <button type="button" class="btn-plein" id="suggestEnvoyer">Envoyer</button>
   </div>
+
+  <h3 class="sugg-titre">Propositions reçues <span id="suggNombre"></span></h3>
+  <div class="sugg-liste" id="suggListe"></div>
 </dialog>
 
 <script>
@@ -901,43 +937,148 @@ $("rulesClose").addEventListener("click", () => $("rulesDlg").close());
 $("rulesDlg").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 
 // ---- suggestions ----
-// Adresse assemblée à l'exécution : elle n'apparaît pas en clair dans la page.
-const DESTINATAIRE = ["routhiau.quentin", "gmail.com"].join("@");
+// Les propositions sont déposées sur /api/suggestions — une fonction Cloudflare Pages
+// adossée à un espace KV — puis relues dans cette même fenêtre. Le site ne porte aucune
+// adresse de courriel, et rien de ce qui est saisi ne quitte le compte Cloudflare.
+const API_SUGG = "/api/suggestions";
+const suggListe = $("suggListe");
+const suggNombre = $("suggNombre");
+const suggErreur = $("suggestErreur");
+const suggEnvoyer = $("suggestEnvoyer");
+
+// Jeton de modération : déposé une fois par ?moderation=…, retenu ensuite. Sans lui,
+// aucun bouton de suppression n'est rendu — et de toute façon le serveur refuserait.
+let jetonModeration = null;
+try {
+  const passe = new URLSearchParams(location.search).get("moderation");
+  if (passe) {
+    localStorage.setItem("pc-moderation", passe);
+    history.replaceState(null, "", location.pathname); // le jeton ne reste pas dans l'adresse
+  }
+  jetonModeration = localStorage.getItem("pc-moderation");
+} catch (e) { /* stockage refusé : pas de modération, le reste fonctionne */ }
+
+const dateSugg = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Paris"
+});
+
+function erreurSugg(texte) {
+  suggErreur.textContent = texte || "";
+  suggErreur.hidden = !texte;
+}
+
+function messageListe(texte) {
+  suggListe.textContent = "";
+  const p = document.createElement("p");
+  p.className = "sugg-vide";
+  p.textContent = texte;
+  suggListe.appendChild(p);
+}
+
+function afficheSuggestions(suggestions) {
+  suggNombre.textContent = suggestions.length ? "(" + suggestions.length + ")" : "";
+  if (!suggestions.length) {
+    messageListe("Aucune proposition pour l'instant. La vôtre sera la première.");
+    return;
+  }
+  suggListe.textContent = "";
+  for (const s of suggestions) {
+    const bloc = document.createElement("article");
+    bloc.className = "sugg";
+
+    const meta = document.createElement("p");
+    meta.className = "sugg-meta";
+    let quand = "";
+    try { quand = dateSugg.format(new Date(s.quand)); } catch (e) { /* date illisible */ }
+    meta.textContent = [s.qui, quand].filter(Boolean).join(" · ");
+
+    const corps = document.createElement("p");
+    corps.className = "sugg-texte";
+    corps.textContent = s.texte; // jamais innerHTML : ce texte vient du public
+
+    bloc.append(meta, corps);
+
+    if (jetonModeration) {
+      const sup = document.createElement("button");
+      sup.type = "button";
+      sup.className = "sugg-suppr";
+      sup.textContent = "Supprimer";
+      sup.addEventListener("click", () => supprimeSuggestion(s.id, sup));
+      bloc.appendChild(sup);
+    }
+    suggListe.appendChild(bloc);
+  }
+}
+
+async function chargeSuggestions() {
+  messageListe("Chargement…");
+  try {
+    const r = await fetch(API_SUGG, { cache: "no-store" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erreur || "erreur " + r.status);
+    afficheSuggestions(d.suggestions || []);
+  } catch (e) {
+    messageListe("Les propositions ne sont pas consultables pour le moment.");
+    suggNombre.textContent = "";
+  }
+}
+
+async function supprimeSuggestion(id, bouton) {
+  bouton.disabled = true;
+  try {
+    const r = await fetch(API_SUGG + "?id=" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: { authorization: "Bearer " + jetonModeration }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erreur || "erreur " + r.status);
+    afficheSuggestions(d.suggestions || []);
+  } catch (e) {
+    bouton.disabled = false;
+    erreurSugg("Suppression refusée : " + e.message);
+  }
+}
 
 $("suggestBtn").addEventListener("click", () => {
-  $("suggestErreur").hidden = true;
+  erreurSugg("");
   $("suggestDlg").showModal();
   $("suggestTexte").focus();
+  chargeSuggestions();
 });
 $("suggestClose").addEventListener("click", () => $("suggestDlg").close());
 $("suggestDlg").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 
-$("suggestEnvoyer").addEventListener("click", () => {
+suggEnvoyer.addEventListener("click", async () => {
   const texte = $("suggestTexte").value.trim();
-  if (!texte) {
-    $("suggestErreur").hidden = false;
+  if (texte.length < 3) {
+    erreurSugg("Décrivez votre suggestion avant d'envoyer.");
     $("suggestTexte").focus();
     return;
   }
-  const qui = $("suggestQui").value.trim();
-  const corps = texte + (qui ? "\n\n— " + qui : "") +
-    "\n\n(envoyé depuis le site des ouvertures du pont Colbert)";
-  location.href = "mailto:" + DESTINATAIRE +
-    "?subject=" + encodeURIComponent("Pont Colbert — suggestion") +
-    "&body=" + encodeURIComponent(corps);
-  $("suggestDlg").close();
-});
-
-$("suggestCopier").addEventListener("click", async () => {
-  const btn = $("suggestCopier");
-  const initial = "Copier l'adresse";
+  erreurSugg("");
+  suggEnvoyer.disabled = true;
+  const initial = suggEnvoyer.textContent;
+  suggEnvoyer.textContent = "Envoi…";
   try {
-    await navigator.clipboard.writeText(DESTINATAIRE);
-    btn.textContent = "Adresse copiée";
+    const r = await fetch(API_SUGG, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        texte,
+        qui: $("suggestQui").value.trim(),
+        site: $("suggestSite").value
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erreur || "erreur " + r.status);
+    $("suggestTexte").value = "";
+    if (d.suggestions) afficheSuggestions(d.suggestions); else chargeSuggestions();
   } catch (e) {
-    btn.textContent = DESTINATAIRE;
+    erreurSugg("Envoi impossible : " + e.message);
+  } finally {
+    suggEnvoyer.disabled = false;
+    suggEnvoyer.textContent = initial;
   }
-  setTimeout(() => { btn.textContent = initial; }, 2500);
 });
 
 // ---- fréquentation ----

@@ -55,8 +55,42 @@ dans le stockage local. Si le service ne répond pas, le bloc reste masqué plut
 d'afficher un compteur cassé. Les clés d'administration permettant de remettre les
 compteurs à zéro sont dans `CLES-ADMIN.txt`, exclu du dépôt.
 
-Le bouton « Proposer une amélioration » compose un courriel prérempli. L'adresse est
-assemblée à l'exécution et n'apparaît donc pas en clair dans le source de la page.
+Le bouton « Proposer une amélioration » dépose la proposition sur `/api/suggestions` et
+affiche dans la même fenêtre les propositions déjà reçues. **Le site ne porte aucune
+adresse de courriel** : `build.js` refuse toute sortie qui en contiendrait une, motif
+générique à l'appui.
+
+`functions/api/suggestions.js` est une fonction Cloudflare Pages adossée à un espace KV.
+Elle doit rester dans `functions/` à la racine du dépôt : Pages les y cherche, et non dans
+le répertoire de sortie du build. Tout tient dans une seule clé KV contenant un tableau
+JSON — une lecture par affichage plutôt qu'une par proposition.
+
+À configurer une fois dans le tableau de bord Pages :
+
+| Réglage | Valeur |
+|---|---|
+| Liaison KV | nom de variable `SUGGESTIONS`, vers un espace KV dédié |
+| Variable secrète | `MODERATION_JETON`, une chaîne aléatoire |
+
+Sans la liaison KV, la fonction répond 503 avec un message explicite et la fenêtre affiche
+« Les propositions ne sont pas consultables pour le moment » — le reste du site continue
+de fonctionner.
+
+Les propositions sont **publiques** : elles s'affichent pour tous les visiteurs. Le dépôt
+est donc protégé par un champ leurre, des longueurs plafonnées, un refus des doublons
+consécutifs et un plafond de 300 entrées ; le texte est rendu par `textContent`, jamais en
+HTML. Aucune adresse IP ni empreinte de navigateur n'est conservée.
+
+Pour supprimer une proposition, ouvrir une fois
+`https://pont-colbert.fr/?moderation=<MODERATION_JETON>` : le jeton est retenu par le
+navigateur, retiré de la barre d'adresse, et un bouton « Supprimer » apparaît sous chaque
+entrée. Sans jeton valable, le serveur refuse.
+
+Vérifier la fonction sans déployer :
+
+```bash
+node src/test_suggestions.mjs
+```
 
 ## Structure
 
@@ -64,6 +98,8 @@ assemblée à l'exécution et n'apparaît donc pas en clair dans le source de la
 index.html          le site
 assets/             photos du héro (jour et nuit), deux largeurs chacune
 docs/               avis officiel de la capitainerie : PDF et pages en images
+functions/
+  api/suggestions.js  recueil des propositions (fonction Pages + espace KV)
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
   prepare_photo.py            recadre une photo et produit les largeurs voulues
@@ -78,6 +114,7 @@ src/
   gen_bridge.js               produit le dessin du pont
   parse_mi2.js                extrait les marées officielles des pages maree.info
   test_page_logic.js          vérifie la logique des créneaux sur les 915 jours
+  test_suggestions.mjs        vérifie la fonction de recueil, sans déployer
   model.json, extra.json      coefficients du modèle harmonique ajusté
   bridge.svg.html, gen_bridge.js   ancienne silhouette dessinée du pont, conservée
                                    pour mémoire ; plus utilisée depuis le héro photo

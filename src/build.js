@@ -234,6 +234,14 @@ for (const needed of ['<!doctype html>', 'name="viewport"', '<meta charset="utf-
   'id="themeBtn"', 'id="suggestBtn"', 'id="stats"', '</body>', '</html>']) {
   if (!doc.includes(needed)) throw new Error(`sortie : ${needed} manquant`);
 }
+// La page ne doit porter aucune adresse de courriel : les suggestions passent par
+// /api/suggestions et se relisent sur place. Les motifs restent volontairement génériques
+// — y inscrire l'adresse à proscrire reviendrait à la publier dans un dépôt public.
+for (const interdit of [/mailto:/i, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/]) {
+  const trouve = doc.match(interdit);
+  if (trouve) throw new Error(`sortie : « ${trouve[0]} » ne doit pas figurer dans la page`);
+}
+
 if ((doc.match(/<html/g) || []).length !== 1) throw new Error('sortie : <html> en double');
 if ((doc.match(/<body/g) || []).length !== 1) throw new Error('sortie : <body> en double');
 // aucune adresse de photo ne doit être atteignable par l'analyseur spéculatif
