@@ -405,7 +405,7 @@
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
   }
   .stats {
-    display: flex; gap: 16px; margin: 0; font-size: .78rem;
+    display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: .78rem;
     color: var(--ink-soft); font-variant-numeric: tabular-nums;
   }
   .stats b { display: block; font-size: 1.05rem; font-weight: 700; color: var(--ink); }
@@ -507,8 +507,8 @@
     <div class="footer-actions">
       <button type="button" class="btn-discret" id="suggestBtn">Proposer une amélioration</button>
       <p class="stats" id="stats" hidden>
-        <span><b id="statVisiteurs">—</b> visiteurs</span>
-        <span><b id="statVisites">—</b> visites</span>
+        <span><b id="statVisiteurs">—</b> visiteurs uniques</span>
+        <span><b id="statVisites">—</b> visites totales</span>
       </p>
     </div>
   </footer>
