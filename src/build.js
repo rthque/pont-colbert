@@ -135,6 +135,34 @@ if (!balise[0].includes(`width="${reelles.largeur}"`) || !balise[0].includes(`he
   throw new Error(`gabarit : déclarer la photo du héro en ${reelles.largeur}x${reelles.hauteur}`);
 }
 
+// --- cohérence des traductions ---
+// t() retombe sur le français quand une clé manque en anglais : le défaut ne casse rien,
+// il se voit seulement à l'écran, sous la forme d'une phrase française au milieu de
+// l'anglais. Autant l'attraper ici.
+function blocAccolades(source, ancre) {
+  const depart = source.indexOf(ancre);
+  if (depart < 0) throw new Error(`gabarit : ${ancre.trim()} introuvable`);
+  let profondeur = 0, debut = -1;
+  for (let i = depart; i < source.length; i++) {
+    if (source[i] === '{') { if (debut < 0) debut = i; profondeur++; }
+    else if (source[i] === '}' && --profondeur === 0) return source.slice(debut, i + 1);
+  }
+  throw new Error(`gabarit : bloc ${ancre.trim()} non refermé`);
+}
+
+const LANGUES = { français: blocAccolades(html, '  fr: {'), anglais: blocAccolades(html, '  en: {') };
+const clesUtilisees = new Set();
+for (const m of html.matchAll(/data-i18n(?:-html|-aria|-alt)?="([^"]+)"/g)) clesUtilisees.add(m[1]);
+for (const m of html.matchAll(/\bt\("([A-Za-z0-9]+)"/g)) clesUtilisees.add(m[1]);
+if (clesUtilisees.size < 40) throw new Error(`traductions : ${clesUtilisees.size} clés seulement, extraction douteuse`);
+for (const cle of clesUtilisees) {
+  for (const [langue, bloc] of Object.entries(LANGUES)) {
+    if (!new RegExp(`(^|[\\s{,])${cle}\\s*:`).test(bloc)) {
+      throw new Error(`traduction : la clé « ${cle} » manque en ${langue}`);
+    }
+  }
+}
+
 const opens = (html.match(/<svg/g) || []).length;
 const closes = (html.match(/<\/svg>/g) || []).length;
 if (opens !== closes) throw new Error(`balises <svg> déséquilibrées : ${opens}/${closes}`);

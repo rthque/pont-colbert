@@ -150,13 +150,20 @@
   :root[data-theme="light"] .hero { --voile: 0, 26, 52; }
   :root[data-theme="dark"] .hero { --voile: 4, 14, 24; }
   /* bascule de thème : posée sur la photo, lisible sur ciel clair comme sur nuit */
-  .theme-toggle {
-    position: absolute; top: 10px; right: 10px; z-index: 2;
+  /* bascules posées sur la photo : thème en haut, langue juste en dessous */
+  .theme-toggle, .lang-toggle {
+    position: absolute; right: 10px; z-index: 2;
     width: 38px; height: 38px; padding: 0; cursor: pointer;
     display: flex; align-items: center; justify-content: center; border-radius: 6px;
     background: rgba(6, 18, 30, .58); border: 1px solid rgba(245, 240, 232, .45); color: #F5F0E8;
   }
-  .theme-toggle:hover { background: rgba(6, 18, 30, .85); border-color: #F5F0E8; }
+  .theme-toggle { top: 10px; }
+  .lang-toggle {
+    top: 54px;
+    font: 700 .72rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: .06em;
+  }
+  .theme-toggle:hover, .lang-toggle:hover { background: rgba(6, 18, 30, .85); border-color: #F5F0E8; }
   .theme-toggle svg { display: block; width: 19px; height: 19px; }
   .hero-content {
     position: absolute; inset: auto 0 0 0; z-index: 1;
@@ -424,12 +431,12 @@
 
   <div class="cam-panel" id="camPanel">
     <div class="cam-bar">
-      <span class="cam-title">Webcam — pont Colbert en direct</span>
-      <a href="https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ" target="_blank" rel="noopener">Plein écran ↗</a>
-      <button type="button" id="camClose">Fermer ✕</button>
+      <span class="cam-title" data-i18n="camTitre">Webcam — pont Colbert en direct</span>
+      <a href="https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ" target="_blank" rel="noopener" data-i18n="camPlein">Plein écran ↗</a>
+      <button type="button" id="camClose" data-i18n="fermer">Fermer ✕</button>
     </div>
     <div class="cam-frame" id="camFrame"></div>
-    <div class="cam-blocked">
+    <div class="cam-blocked" data-i18n-html="camBloquee">
       La vidéo ne peut pas s'afficher à l'intérieur de cette page.
       <br><a href="https://pv.viewsurf.com/708/Dieppe-Marcel-Paul?i=ODYxMDp1bmRlZmluZWQ" target="_blank" rel="noopener">Ouvrir la webcam dans un onglet ↗</a>
     </div>
@@ -459,78 +466,82 @@
       })();
     </script>
     <button class="theme-toggle" id="themeBtn" type="button" aria-label="Changer de thème"></button>
+    <button class="lang-toggle" id="langBtn" type="button"></button>
     <div class="hero-content">
       <div class="titles">
         <h1>Pont Colbert</h1>
-        <small>Dieppe · Créneaux d'ouverture</small>
+        <small data-i18n="sousTitre">Dieppe · Créneaux d'ouverture</small>
       </div>
       <div class="hero-btns">
-        <button type="button" id="camBtn" class="ghost">▶ Webcam</button>
-        <button type="button" id="rulesBtn">Règles</button>
+        <button type="button" id="camBtn" class="ghost" data-i18n="webcam">▶ Webcam</button>
+        <button type="button" id="rulesBtn" data-i18n="regles">Règles</button>
       </div>
     </div>
   </header>
 
-  <nav class="nav" aria-label="Choix du jour">
-    <button class="arrow" id="prev" type="button" aria-label="Jour précédent">←</button>
-    <input type="date" id="datePick" min="2026-07-01" max="2028-12-31" aria-label="Date">
-    <button class="arrow" id="next" type="button" aria-label="Jour suivant">→</button>
+  <nav class="nav" data-i18n-aria="navJour" aria-label="Choix du jour">
+    <button class="arrow" id="prev" type="button" data-i18n-aria="jourPrec" aria-label="Jour précédent">←</button>
+    <input type="date" id="datePick" min="2026-07-01" max="2028-12-31" data-i18n-aria="dateChamp" aria-label="Date">
+    <button class="arrow" id="next" type="button" data-i18n-aria="jourSuiv" aria-label="Jour suivant">→</button>
   </nav>
 
   <div class="dayhead">
     <h2 id="dayTitle"></h2>
-    <button class="today-link" id="todayBtn" type="button" hidden>↩ Aujourd'hui</button>
+    <button class="today-link" id="todayBtn" type="button" hidden data-i18n="aujourdhui">↩ Aujourd'hui</button>
     <span id="srcChip" class="chip official"></span>
   </div>
 
   <ol class="tl" id="timeline"></ol>
 
   <div class="legend">
-    <span><i style="background:var(--go-badge)"></i>Ouverture possible</span>
-    <span><i style="background:var(--pm-strong)"></i>Pleine mer</span>
-    <span><i style="background:var(--exc-line)"></i>Exceptionnelle</span>
+    <span><i style="background:var(--go-badge)"></i><span data-i18n="legOuv">Ouverture possible</span></span>
+    <span><i style="background:var(--pm-strong)"></i><span data-i18n="legPM">Pleine mer</span></span>
+    <span><i style="background:var(--exc-line)"></i><span data-i18n="legExc">Exceptionnelle</span></span>
   </div>
 
   <section class="nextwrap">
-    <h3>Jours suivants — pleines mers</h3>
+    <h3 data-i18n="joursSuivants">Jours suivants — pleines mers</h3>
     <div class="nextdays" id="nextDays"></div>
   </section>
 
   <footer>
-    <p><b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, port de Dieppe).
+    <p data-i18n-html="piedSources"><b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, port de Dieppe).
     2027–2028 : prédiction harmonique (102 composantes) calée sur 2 ans de données SHOM —
     écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique de Dieppe),
     coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.</p>
-    <p>Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
+    <p data-i18n="piedAvert">Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
     décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).</p>
 
     <div class="footer-actions">
-      <button type="button" class="btn-discret" id="suggestBtn">Proposer une amélioration</button>
+      <button type="button" class="btn-discret" id="suggestBtn" data-i18n="proposer">Proposer une amélioration</button>
       <p class="stats" id="stats" hidden>
-        <span><b id="statVisiteurs">—</b> visiteurs uniques</span>
-        <span><b id="statVisites">—</b> visites totales</span>
+        <span><b id="statVisiteurs">—</b> <span data-i18n="visiteursUniques">visiteurs uniques</span></span>
+        <span><b id="statVisites">—</b> <span data-i18n="visitesTotales">visites totales</span></span>
       </p>
     </div>
   </footer>
 </div>
 
 <dialog id="rulesDlg" class="avis-dlg" aria-labelledby="rulesTitle">
-  <button class="dlg-close" id="rulesClose" type="button">Fermer ✕</button>
-  <h2 id="rulesTitle">Avis aux usagers</h2>
-  <p class="src">Capitainerie du port de Dieppe — 8 juillet 2026. Conditions d'exploitation
+  <button class="dlg-close" id="rulesClose" type="button" data-i18n="fermer">Fermer ✕</button>
+  <h2 id="rulesTitle" data-i18n="avisTitre">Avis aux usagers</h2>
+  <p class="src" data-i18n="avisSource">Capitainerie du port de Dieppe — 8 juillet 2026. Conditions d'exploitation
   et modalités d'ouverture du pont Colbert.</p>
 
   <div class="avis">
     <img src="__AVIS_PAGE1__" width="1000" height="1415" loading="lazy" decoding="async"
+         data-i18n-alt="avisAlt1"
          alt="Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la pleine mer), ouvertures à horaires fixes à 07h30 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 réservées aux navires EMDT.">
     <img src="__AVIS_PAGE2__" width="1000" height="1415" loading="lazy" decoding="async"
+         data-i18n-alt="avisAlt2"
          alt="Avis aux usagers, page 2 : dispositions particulières, liste de diffusion, signature du lieutenant de port.">
   </div>
 
-  <p class="avis-lien"><a href="__AVIS_PDF__" target="_blank" rel="noopener">Ouvrir le PDF officiel ↗</a></p>
+  <p class="avis-lien"><a href="__AVIS_PDF__" target="_blank" rel="noopener" data-i18n="avisPdf">Ouvrir le PDF officiel ↗</a></p>
 
   <details class="avis-texte">
-    <summary>Version texte</summary>
+    <summary data-i18n="versionTexte">Version texte</summary>
+    <div data-i18n-html="avisCorps">
     <h4 class="g">1 · Ouvertures à la marée</h4>
     <p>Manœuvres réalisées uniquement en présence de navires :</p>
     <ul>
@@ -563,39 +574,40 @@
     <p>Les horaires peuvent être adaptés, ou des manœuvres complémentaires autorisées, à
     l'occasion de manifestations ou de besoins exceptionnels, après accord de la Capitainerie
     et de l'Autorité portuaire. Pour toute demande particulière : <b>VHF 12</b>.</p>
+    </div>
   </details>
 
-  <p class="note">Les heures de pleine mer affichées proviennent des prédictions SHOM (2026)
+  <p class="note" data-i18n="avisNote">Les heures de pleine mer affichées proviennent des prédictions SHOM (2026)
   ou du modèle harmonique validé (2027-2028).</p>
 </dialog>
 
 <dialog id="suggestDlg" aria-labelledby="suggestTitle">
-  <button class="dlg-close" id="suggestClose" type="button">Fermer ✕</button>
-  <h2 id="suggestTitle">Proposer une amélioration</h2>
-  <p class="src">Une donnée manquante, un affichage à revoir, un besoin propre à votre activité ?
+  <button class="dlg-close" id="suggestClose" type="button" data-i18n="fermer">Fermer ✕</button>
+  <h2 id="suggestTitle" data-i18n="proposer">Proposer une amélioration</h2>
+  <p class="src" data-i18n="suggIntro">Une donnée manquante, un affichage à revoir, un besoin propre à votre activité ?
   Décrivez-le. Votre proposition rejoindra la liste ci-dessous, que chacun peut lire.
   N'y mettez rien de confidentiel.</p>
 
-  <label class="champ" for="suggestQui">Votre nom ou navire <span>(facultatif)</span></label>
+  <label class="champ" for="suggestQui" data-i18n-html="suggQui">Votre nom ou navire <span>(facultatif)</span></label>
   <input class="champ-saisie" type="text" id="suggestQui" autocomplete="off" maxlength="60">
 
-  <label class="champ" for="suggestTexte">Votre suggestion</label>
+  <label class="champ" for="suggestTexte" data-i18n="suggTexte">Votre suggestion</label>
   <textarea class="champ-saisie" id="suggestTexte" rows="5" maxlength="1200"></textarea>
 
   <!-- Leurre : hors écran et hors parcours de tabulation, donc invisible pour un visiteur.
        Les robots à formulaire le remplissent, ce qui suffit à les écarter côté serveur. -->
   <div class="leurre" aria-hidden="true">
-    <label for="suggestSite">Ne rien saisir ici</label>
+    <label for="suggestSite" data-i18n="suggLeurre">Ne rien saisir ici</label>
     <input type="text" id="suggestSite" tabindex="-1" autocomplete="off">
   </div>
 
   <p class="champ-erreur" id="suggestErreur" hidden></p>
 
   <div class="dlg-actions">
-    <button type="button" class="btn-plein" id="suggestEnvoyer">Envoyer</button>
+    <button type="button" class="btn-plein" id="suggestEnvoyer" data-i18n="envoyer">Envoyer</button>
   </div>
 
-  <h3 class="sugg-titre">Propositions reçues <span id="suggNombre"></span></h3>
+  <h3 class="sugg-titre"><span data-i18n="suggRecues">Propositions reçues</span> <span id="suggNombre"></span></h3>
   <div class="sugg-liste" id="suggListe"></div>
 </dialog>
 
@@ -617,21 +629,254 @@ const ICO_WAVE = '<svg width="20" height="12" viewBox="0 0 20 12" fill="none" xm
   '<path d="M0 9C2.5 9 2.5 6 5 6C7.5 6 7.5 9 10 9C12.5 9 12.5 6 15 6C17.5 6 17.5 9 20 9V12H0V9Z" fill="#F5F0E8"/>' +
   '<path d="M10 0L13 4H7L10 0Z" fill="#F5F0E8"/></svg>';
 
+// ---- français / anglais ----
+// Le site s'adresse aussi à des équipages étrangers. Tout le texte visible vit dans ce
+// dictionnaire ; le balisage porte des clés en attribut data-i18n, et les libellés
+// engendrés à l'affichage passent par t(). Une valeur peut être une fonction lorsqu'elle
+// dépend d'un nombre : l'accord au pluriel n'obéit pas aux mêmes règles d'une langue à
+// l'autre, et un simple « (s) » se voit.
+//
+// Ce qui reste en français : le PDF de l'avis et ses pages en images. C'est un document
+// officiel de la capitainerie — le traduire en ferait une réécriture, sans valeur
+// juridique. La version texte, elle, est traduite, et signalée comme traduction de
+// courtoisie.
+const TEXTES = {
+  fr: {
+    langue: "FR", langueAutre: "Passer en anglais",
+    titrePage: "Pont Colbert — Ouvertures",
+    fermer: "Fermer ✕",
+    camTitre: "Webcam — pont Colbert en direct",
+    camPlein: "Plein écran ↗",
+    camBloquee: "La vidéo ne peut pas s'afficher à l'intérieur de cette page.<br>" +
+      '<a href="' + CAM_URL + '" target="_blank" rel="noopener">Ouvrir la webcam dans un onglet ↗</a>',
+    sousTitre: "Dieppe · Créneaux d'ouverture",
+    webcam: "▶ Webcam",
+    regles: "Règles",
+    navJour: "Choix du jour", jourPrec: "Jour précédent", jourSuiv: "Jour suivant", dateChamp: "Date",
+    aujourdhui: "↩ Aujourd'hui",
+    legOuv: "Ouverture possible", legPM: "Pleine mer", legExc: "Exceptionnelle",
+    joursSuivants: "Jours suivants — pleines mers",
+    piedSources: "<b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, " +
+      "port de Dieppe). 2027–2028 : prédiction harmonique (102 composantes) calée sur 2 ans de données SHOM — " +
+      "écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique " +
+      "de Dieppe), coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.",
+    piedAvert: "Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe " +
+      "reste seule décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).",
+    proposer: "Proposer une amélioration",
+    visiteursUniques: "visiteurs uniques", visitesTotales: "visites totales",
+
+    avisTitre: "Avis aux usagers",
+    avisSource: "Capitainerie du port de Dieppe — 8 juillet 2026. Conditions d'exploitation et modalités " +
+      "d'ouverture du pont Colbert.",
+    avisAlt1: "Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la " +
+      "pleine mer), ouvertures à horaires fixes à 07h30 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 " +
+      "réservées aux navires EMDT.",
+    avisAlt2: "Avis aux usagers, page 2 : dispositions particulières, liste de diffusion, signature du " +
+      "lieutenant de port.",
+    avisPdf: "Ouvrir le PDF officiel ↗",
+    versionTexte: "Version texte",
+    avisCorps:
+      '<h4 class="g">1 · Ouvertures à la marée</h4>' +
+      "<p>Manœuvres réalisées uniquement en présence de navires :</p>" +
+      "<ul><li><b>PM − 2 h</b> — 2 heures avant la pleine mer ;</li>" +
+      "<li><b>PM − 45 min</b> — 45 minutes avant la pleine mer ;</li>" +
+      "<li><b>PM + 45 min</b> — 45 minutes après la pleine mer.</li></ul>" +
+      "<p>Une manœuvre supplémentaire peut être exceptionnellement autorisée par la Capitainerie en cas de " +
+      "nécessité impérieuse, ou pour un navire de commerce dont les contraintes d'exploitation ne sont pas " +
+      "compatibles avec ces créneaux.</p>" +
+      '<h4 class="g">2 · Ouvertures à horaires fixes</h4>' +
+      "<p>Réalisées uniquement si des navires se présentent :</p>" +
+      "<ul><li><b>07 h 30</b> ;</li><li><b>18 h 30</b>.</li></ul>" +
+      '<h4 class="o">3 · Ouvertures exceptionnelles</h4>' +
+      "<p>En cas de contrainte technique, de dégradation imprévisible des conditions de mer ou de force " +
+      "majeure :</p><ul><li><b>11 h 30</b> ;</li><li><b>15 h 30</b>.</li></ul>" +
+      "<p>Ces créneaux sont réservés aux navires EMDT lorsque les horaires liés à la marée ne permettent pas " +
+      "leur passage.</p>" +
+      "<h4>4 · Dispositions particulières</h4>" +
+      "<p>Les horaires peuvent être adaptés, ou des manœuvres complémentaires autorisées, à l'occasion de " +
+      "manifestations ou de besoins exceptionnels, après accord de la Capitainerie et de l'Autorité portuaire. " +
+      "Pour toute demande particulière : <b>VHF 12</b>.</p>",
+    avisNote: "Les heures de pleine mer affichées proviennent des prédictions SHOM (2026) ou du modèle " +
+      "harmonique validé (2027-2028).",
+
+    suggIntro: "Une donnée manquante, un affichage à revoir, un besoin propre à votre activité ? Décrivez-le. " +
+      "Votre proposition rejoindra la liste ci-dessous, que chacun peut lire. N'y mettez rien de confidentiel.",
+    suggQui: "Votre nom ou navire <span>(facultatif)</span>",
+    suggTexte: "Votre suggestion",
+    suggLeurre: "Ne rien saisir ici",
+    envoyer: "Envoyer", envoiEnCours: "Envoi…",
+    suggRecues: "Propositions reçues",
+    suggChargement: "Chargement…",
+    suggAucune: "Aucune proposition pour l'instant. La vôtre sera la première.",
+    suggIndispo: "Les propositions ne sont pas consultables pour le moment.",
+    suggVide: "Décrivez votre suggestion avant d'envoyer.",
+    suggEchecEnvoi: e => "Envoi impossible : " + e,
+    suggEchecSuppr: e => "Suppression refusée : " + e,
+    supprimer: "Supprimer",
+
+    slotAvant2h: "Passage PM − 2 h", slotAvant45: "Passage PM − 45 min", slotApres45: "Passage PM + 45 min",
+    sousMaree: "Ouverture sur marée — si navires présents",
+    pleineMer: "Pleine mer",
+    sousPleineMer: "Pas de manœuvre à la pleine mer même",
+    coeff: (v, estime) => (estime ? "coeff ≈ " : "coeff ") + v,
+    ouvFixe: "Ouverture à heure fixe",
+    sousFixe: "Entrées/sorties quai de la Somme — si navires présents",
+    ouvExc: "Ouverture exceptionnelle",
+    sousExc: "Seulement si contrainte technique, mer dégradée ou force majeure",
+    chipHors: "hors période couverte",
+    chipPred: "Prédiction harmonique ±2 min",
+    chipOfficiel: "Marées officielles SHOM",
+    sansDonnees: "Pas de données de marée pour cette date.<br>Période couverte : 01/07/2026 → 31/12/2028.",
+    masquerPasses: n => "Masquer les " + n + " créneaux passés ▴",
+    afficherPasses: n => n + " créneau" + (n > 1 ? "x" : "") + " déjà passé" + (n > 1 ? "s" : "") + " — afficher ▾",
+    plusDeCreneau: "Plus de créneau aujourd'hui — voir les jours suivants ci-dessous.",
+    themeVers: clair => "Passer au thème " + (clair ? "clair" : "sombre"),
+    altNuit: "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée " +
+      "de lumière bleue, le front de mer du Pollet éclairé en arrière-plan",
+    altJour: "Vue de jour du pont Colbert à Dieppe : sa travée en treillis rivetée franchissant le chenal, " +
+      "le bassin de plaisance et les quais du Pollet en arrière-plan",
+  },
+  en: {
+    langue: "EN", langueAutre: "Switch to French",
+    titrePage: "Pont Colbert — Bridge openings",
+    fermer: "Close ✕",
+    camTitre: "Webcam — Pont Colbert live",
+    camPlein: "Full screen ↗",
+    camBloquee: "The video cannot be shown inside this page.<br>" +
+      '<a href="' + CAM_URL + '" target="_blank" rel="noopener">Open the webcam in a new tab ↗</a>',
+    sousTitre: "Dieppe · Bridge opening slots",
+    webcam: "▶ Webcam",
+    regles: "Rules",
+    navJour: "Choose a day", jourPrec: "Previous day", jourSuiv: "Next day", dateChamp: "Date",
+    aujourdhui: "↩ Today",
+    legOuv: "Possible opening", legPM: "High water", legExc: "Exceptional",
+    joursSuivants: "Coming days — high waters",
+    piedSources: "<b>Sources.</b> Until 31/12/2026: official SHOM tide times (maree.shom.fr / maree.info, " +
+      "port of Dieppe). 2027–2028: harmonic prediction (102 constituents) fitted on 2 years of SHOM data — " +
+      "error checked against high waters: ±2 min (7 min max). Heights above chart datum (Dieppe hydrographic " +
+      "zero), 2027–2028 coefficients estimated (±3). French local time (Europe/Paris), 24-hour clock.",
+    piedAvert: "The bridge is only operated when vessels are present. Indicative tool — the Dieppe harbour " +
+      "master alone decides on actual openings (VHF 12). Webcam: viewsurf.com (city of Dieppe).",
+    proposer: "Suggest an improvement",
+    visiteursUniques: "unique visitors", visitesTotales: "total visits",
+
+    avisTitre: "Notice to users",
+    avisSource: "Dieppe harbour master's office — 8 July 2026. Operating conditions and opening arrangements " +
+      "for the Pont Colbert.",
+    avisAlt1: "Notice to users, page 1: tide-based openings (2 h before, 45 min before and 45 min after high " +
+      "water), fixed-time openings at 07:30 and 18:30, exceptional openings at 11:30 and 15:30 reserved for " +
+      "EMDT vessels.",
+    avisAlt2: "Notice to users, page 2: special provisions, circulation list, signature of the port lieutenant.",
+    avisPdf: "Open the official PDF ↗",
+    versionTexte: "Text version",
+    avisCorps:
+      '<h4 class="g">1 · Tide-based openings</h4>' +
+      "<p>Carried out only when vessels are present:</p>" +
+      "<ul><li><b>HW − 2 h</b> — 2 hours before high water;</li>" +
+      "<li><b>HW − 45 min</b> — 45 minutes before high water;</li>" +
+      "<li><b>HW + 45 min</b> — 45 minutes after high water.</li></ul>" +
+      "<p>One additional opening may exceptionally be authorised by the harbour master in case of compelling " +
+      "necessity, or for a commercial vessel whose operating constraints are not compatible with these slots.</p>" +
+      '<h4 class="g">2 · Fixed-time openings</h4>' +
+      "<p>Carried out only if vessels present themselves:</p>" +
+      "<ul><li><b>07:30</b>;</li><li><b>18:30</b>.</li></ul>" +
+      '<h4 class="o">3 · Exceptional openings</h4>' +
+      "<p>In case of technical constraint, unforeseeable deterioration of sea conditions, or force majeure:</p>" +
+      "<ul><li><b>11:30</b>;</li><li><b>15:30</b>.</li></ul>" +
+      "<p>These slots are reserved for EMDT vessels when the tide-based times do not allow them to transit.</p>" +
+      "<h4>4 · Special provisions</h4>" +
+      "<p>Times may be adjusted, or additional openings authorised, for events or exceptional needs, subject to " +
+      "agreement from the harbour master and the port authority. For any specific request: <b>VHF 12</b>.</p>" +
+      "<p><i>Courtesy translation. Only the French notice above is authoritative.</i></p>",
+    avisNote: "High water times shown here come from SHOM predictions (2026) or from the validated harmonic " +
+      "model (2027-2028).",
+
+    suggIntro: "Missing data, a display to rethink, a need specific to your operations? Describe it. Your " +
+      "suggestion will join the list below, which anyone can read. Do not put anything confidential in it.",
+    suggQui: "Your name or vessel <span>(optional)</span>",
+    suggTexte: "Your suggestion",
+    suggLeurre: "Leave this field empty",
+    envoyer: "Send", envoiEnCours: "Sending…",
+    suggRecues: "Suggestions received",
+    suggChargement: "Loading…",
+    suggAucune: "No suggestions yet. Yours would be the first.",
+    suggIndispo: "Suggestions cannot be loaded at the moment.",
+    suggVide: "Describe your suggestion before sending.",
+    suggEchecEnvoi: e => "Could not send: " + e,
+    suggEchecSuppr: e => "Delete refused: " + e,
+    supprimer: "Delete",
+
+    slotAvant2h: "Transit HW − 2 h", slotAvant45: "Transit HW − 45 min", slotApres45: "Transit HW + 45 min",
+    sousMaree: "Tide-based opening — if vessels are present",
+    pleineMer: "High water",
+    sousPleineMer: "No opening at high water itself",
+    coeff: (v, estime) => (estime ? "coeff. ≈ " : "coeff. ") + v,
+    ouvFixe: "Fixed-time opening",
+    sousFixe: "Quai de la Somme arrivals and departures — if vessels are present",
+    ouvExc: "Exceptional opening",
+    sousExc: "Only in case of technical constraint, deteriorated sea state or force majeure",
+    chipHors: "outside the covered period",
+    chipPred: "Harmonic prediction ±2 min",
+    chipOfficiel: "Official SHOM tides",
+    sansDonnees: "No tide data for this date.<br>Covered period: 01/07/2026 → 31/12/2028.",
+    masquerPasses: n => "Hide the " + n + " past slot" + (n > 1 ? "s" : "") + " ▴",
+    afficherPasses: n => n + " slot" + (n > 1 ? "s" : "") + " already passed — show ▾",
+    plusDeCreneau: "No more slots today — see the coming days below.",
+    themeVers: clair => "Switch to " + (clair ? "light" : "dark") + " theme",
+    altNuit: "The Pont Colbert lit up at night above the Dieppe channel, its lattice span outlined in blue " +
+      "light, the illuminated Pollet waterfront behind",
+    altJour: "Daytime view of the Pont Colbert in Dieppe: its riveted lattice span crossing the channel, with " +
+      "the marina and the Pollet quays behind",
+  },
+};
+
+const LANGUE_KEY = "pc-langue";
+// Sans choix mémorisé, la langue du navigateur décide : un équipage étranger tombe
+// directement sur la version anglaise, un navigateur français reste en français.
+let LANGUE = (function () {
+  try {
+    const memo = localStorage.getItem(LANGUE_KEY);
+    if (memo === "fr" || memo === "en") return memo;
+  } catch (e) { /* stockage refusé */ }
+  return /^fr\b/i.test(navigator.language || "") ? "fr" : "en";
+})();
+
+function t(cle, ...args) {
+  const v = TEXTES[LANGUE][cle] !== undefined ? TEXTES[LANGUE][cle] : TEXTES.fr[cle];
+  return typeof v === "function" ? v(...args) : v;
+}
+
 const TZ = "Europe/Paris";
 const MIN_DAY = "2026-07-01", MAX_DAY = "2028-12-31";
-const fmtDay = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
-const fmtDayShort = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "short", day: "2-digit", month: "2-digit" });
+// La clé de jour reste en en-CA : c'est le seul format qui donne AAAA-MM-JJ, et elle ne
+// s'affiche jamais.
 const fmtKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-const fmtHM = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+// dateSugg est déclaré ici, et non près du dialogue des suggestions qui l'utilise :
+// reglerFormats() l'affecte dès le chargement, et une affectation avant la déclaration
+// d'un let échoue.
+let fmtDay, fmtDayShort, fmtHM, dateSugg;
 
-const hm = ms => fmtHM.format(ms).replace(":", "h");
+function reglerFormats() {
+  const loc = LANGUE === "fr" ? "fr-FR" : "en-GB";
+  fmtDay = new Intl.DateTimeFormat(loc, { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  fmtDayShort = new Intl.DateTimeFormat(loc, { timeZone: TZ, weekday: "short", day: "2-digit", month: "2-digit" });
+  fmtHM = new Intl.DateTimeFormat(loc, { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  dateSugg = new Intl.DateTimeFormat(loc, { timeZone: TZ, day: "numeric", month: "short", year: "numeric" });
+}
+reglerFormats();
+
+// 14h05 en français, 14:05 en anglais — l'heure reste locale française dans les deux cas.
+const hm = ms => LANGUE === "fr" ? fmtHM.format(ms).replace(":", "h") : fmtHM.format(ms);
+const hauteur = cm => LANGUE === "fr"
+  ? (cm / 100).toFixed(2).replace(".", ",") + " m"
+  : (cm / 100).toFixed(2) + " m";
 const keyOf = ms => fmtKey.format(ms);
 
 const byDay = new Map();
-for (const t of TIDES) {
-  const k = keyOf(t[0] * 60000);
+for (const mar of TIDES) {
+  const k = keyOf(mar[0] * 60000);
   if (!byDay.has(k)) byDay.set(k, []);
-  byDay.get(k).push(t);
+  byDay.get(k).push(mar);
 }
 
 function localToUtc(dayStr, hh, mm) {
@@ -655,7 +900,7 @@ function addDays(dayStr, n) {
 function highsAround(dayStr) {
   const out = [];
   for (const k of [addDays(dayStr, -1), dayStr, addDays(dayStr, 1)]) {
-    for (const t of (byDay.get(k) || [])) if (t[2]) out.push(t);
+    for (const mar of (byDay.get(k) || [])) if (mar[2]) out.push(mar);
   }
   return out;
 }
@@ -663,35 +908,31 @@ function highsAround(dayStr) {
 function eventsFor(dayStr) {
   const evs = [];
   let anyPred = false, anyData = false;
-  for (const t of (byDay.get(dayStr) || [])) { anyData = true; if (t[4]) anyPred = true; }
-  for (const t of highsAround(dayStr)) {
-    const pmMs = t[0] * 60000;
-    const slots = [
-      [-120, "Passage PM − 2 h"],
-      [-45, "Passage PM − 45 min"],
-      [45, "Passage PM + 45 min"],
-    ];
-    for (const [off, label] of slots) {
+  for (const mar of (byDay.get(dayStr) || [])) { anyData = true; if (mar[4]) anyPred = true; }
+  for (const mar of highsAround(dayStr)) {
+    const pmMs = mar[0] * 60000;
+    const slots = [[-120, "slotAvant2h"], [-45, "slotAvant45"], [45, "slotApres45"]];
+    for (const [off, cle] of slots) {
       const ms = pmMs + off * 60000;
       if (keyOf(ms) !== dayStr) continue;
-      evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: label, sub: "Ouverture sur marée — si navires présents" });
+      evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: t(cle), sub: t("sousMaree") });
     }
     if (keyOf(pmMs) === dayStr) {
       evs.push({
-        ms: pmMs, cls: "pm", ico: "wave", big: hm(pmMs), title: "Pleine mer",
-        sub: "Pas de manœuvre à la pleine mer même",
-        metaTop: (t[1] / 100).toFixed(2).replace(".", ",") + " m",
-        metaSub: t[3] ? (t[4] ? "coeff ≈ " + t[3] : "coeff " + t[3]) : ""
+        ms: pmMs, cls: "pm", ico: "wave", big: hm(pmMs), title: t("pleineMer"),
+        sub: t("sousPleineMer"),
+        metaTop: hauteur(mar[1]),
+        metaSub: mar[3] ? t("coeff", mar[3], mar[4]) : ""
       });
     }
   }
   for (const [hh, mm] of [[7, 30], [18, 30]]) {
     const ms = localToUtc(dayStr, hh, mm);
-    evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: "Ouverture à heure fixe", sub: "Entrées/sorties quai de la Somme — si navires présents" });
+    evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: t("ouvFixe"), sub: t("sousFixe") });
   }
   for (const [hh, mm] of [[11, 30], [15, 30]]) {
     const ms = localToUtc(dayStr, hh, mm);
-    evs.push({ ms, cls: "exc", ico: "exc", big: hm(ms), title: "Ouverture exceptionnelle", sub: "Seulement si contrainte technique, mer dégradée ou force majeure" });
+    evs.push({ ms, cls: "exc", ico: "exc", big: hm(ms), title: t("ouvExc"), sub: t("sousExc") });
   }
   evs.sort((a, b) => a.ms - b.ms);
   return { evs, anyPred, anyData };
@@ -730,13 +971,13 @@ function render() {
   $("dayTitle").textContent = fmtDay.format(dayMs);
   const { evs, anyPred, anyData } = eventsFor(current);
   const chip = $("srcChip");
-  if (!anyData) { chip.textContent = "hors période couverte"; chip.className = "chip pred"; }
-  else if (anyPred) { chip.textContent = "Prédiction harmonique ±2 min"; chip.className = "chip pred"; }
-  else { chip.textContent = "Marées officielles SHOM"; chip.className = "chip official"; }
+  if (!anyData) { chip.textContent = t("chipHors"); chip.className = "chip pred"; }
+  else if (anyPred) { chip.textContent = t("chipPred"); chip.className = "chip pred"; }
+  else { chip.textContent = t("chipOfficiel"); chip.className = "chip official"; }
   const ol = $("timeline");
   ol.innerHTML = "";
   if (!anyData) {
-    ol.innerHTML = '<li class="empty">Pas de données de marée pour cette date.<br>Période couverte : 01/07/2026 → 31/12/2028.</li>';
+    ol.innerHTML = '<li class="empty">' + t("sansDonnees") + "</li>";
   } else {
     const isToday = current === todayKey;
     const now = Date.now();
@@ -747,9 +988,7 @@ function render() {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "past-toggle";
-      btn.textContent = showPast
-        ? "Masquer les " + past.length + " créneaux passés ▴"
-        : past.length + " créneau" + (past.length > 1 ? "x" : "") + " déjà passé" + (past.length > 1 ? "s" : "") + " — afficher ▾";
+      btn.textContent = showPast ? t("masquerPasses", past.length) : t("afficherPasses", past.length);
       btn.addEventListener("click", () => { showPast = !showPast; render(); });
       tg.appendChild(btn);
       ol.appendChild(tg);
@@ -758,7 +997,7 @@ function render() {
     if (!upcoming.length && past.length) {
       const li = document.createElement("li");
       li.className = "empty";
-      li.textContent = "Plus de créneau aujourd'hui — voir les jours suivants ci-dessous.";
+      li.textContent = t("plusDeCreneau");
       ol.appendChild(li);
     }
     for (const e of upcoming) ol.appendChild(evNode(e, false));
@@ -768,11 +1007,11 @@ function render() {
   for (let i = 1; i <= 6; i++) {
     const k = addDays(current, i);
     if (k > MAX_DAY) break;
-    const highs = (byDay.get(k) || []).filter(t => t[2]);
+    const highs = (byDay.get(k) || []).filter(mar => mar[2]);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "nextday";
-    const pms = highs.map(t => hm(t[0] * 60000) + (t[3] ? " <small>(" + (t[4] ? "≈" : "") + t[3] + ")</small>" : "")).join(" · ");
+    const pms = highs.map(mar => hm(mar[0] * 60000) + (mar[3] ? " <small>(" + (mar[4] ? "≈" : "") + mar[3] + ")</small>" : "")).join(" · ");
     btn.innerHTML = '<span class="d"></span><span class="pms">' + (pms || "—") + "</span>";
     btn.querySelector(".d").textContent = fmtDayShort.format(localToUtc(k, 12, 0));
     btn.addEventListener("click", () => { current = k; showPast = false; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
@@ -788,8 +1027,6 @@ const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
   '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.6 12h2.2M19.2 12h2.2M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6"/></svg>';
 const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"/></svg>';
-const ALT_NUIT = "Le pont Colbert illuminé de nuit au-dessus du chenal de Dieppe, sa travée en treillis soulignée de lumière bleue, le front de mer du Pollet éclairé en arrière-plan";
-const ALT_JOUR = "Vue de jour du pont Colbert à Dieppe : sa travée en treillis rivetée franchissant le chenal, le bassin de plaisance et les quais du Pollet en arrière-plan";
 const heroPhoto = $("heroPhoto");
 const prefersLight = window.matchMedia("(prefers-color-scheme: light)");
 
@@ -810,12 +1047,12 @@ function themeActuel() {
 
 function majBoutonTheme() {
   const actuel = themeActuel();
-  const cible = actuel === "dark" ? "clair" : "sombre";
+  const libelle = t("themeVers", actuel === "dark");
   const btn = $("themeBtn");
   btn.innerHTML = actuel === "dark" ? ICON_SUN : ICON_MOON;
-  btn.setAttribute("aria-label", "Passer au thème " + cible);
-  btn.title = "Passer au thème " + cible;
-  if (heroPhoto) heroPhoto.alt = actuel === "light" ? ALT_JOUR : ALT_NUIT;
+  btn.setAttribute("aria-label", libelle);
+  btn.title = libelle;
+  if (heroPhoto) heroPhoto.alt = t(actuel === "light" ? "altJour" : "altNuit");
 }
 
 // aligne la couleur de la barre du navigateur sur le thème forcé
@@ -843,6 +1080,35 @@ prefersLight.addEventListener("change", () => {
 });
 if (document.documentElement.dataset.theme) majCouleurBarre(document.documentElement.dataset.theme);
 majPhotoHero(themeActuel());
+
+// ---- bascule de langue ----
+// Le balisage porte les clés du dictionnaire : data-i18n pour du texte simple,
+// data-i18n-html quand la phrase contient des balises, data-i18n-aria et data-i18n-alt
+// pour les libellés destinés aux lecteurs d'écran. Un seul parcours suffit donc, et
+// ajouter une phrase au site ne demande que d'y poser une clé.
+function appliquerLangue(langue) {
+  LANGUE = langue;
+  try { localStorage.setItem(LANGUE_KEY, langue); } catch (e) { /* stockage indisponible */ }
+
+  document.documentElement.lang = langue;
+  document.title = t("titrePage");
+  reglerFormats();
+
+  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  for (const el of document.querySelectorAll("[data-i18n-alt]")) el.alt = t(el.dataset.i18nAlt);
+
+  const btn = $("langBtn");
+  btn.textContent = LANGUE === "fr" ? "EN" : "FR"; // ce qu'on obtient en cliquant
+  btn.setAttribute("aria-label", t("langueAutre"));
+  btn.title = t("langueAutre");
+
+  majBoutonTheme();  // son libellé et le texte alternatif de la photo changent aussi
+  render();          // la frise, les dates et les jours suivants sont réengendrés
+}
+
+$("langBtn").addEventListener("click", () => appliquerLangue(LANGUE === "fr" ? "en" : "fr"));
 majBoutonTheme();
 
 // ---- webcam ----
@@ -912,9 +1178,6 @@ try {
   jetonModeration = localStorage.getItem("pc-moderation");
 } catch (e) { /* stockage refusé : pas de modération, le reste fonctionne */ }
 
-const dateSugg = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Paris"
-});
 
 function erreurSugg(texte) {
   suggErreur.textContent = texte || "";
@@ -932,7 +1195,7 @@ function messageListe(texte) {
 function afficheSuggestions(suggestions) {
   suggNombre.textContent = suggestions.length ? "(" + suggestions.length + ")" : "";
   if (!suggestions.length) {
-    messageListe("Aucune proposition pour l'instant. La vôtre sera la première.");
+    messageListe(t("suggAucune"));
     return;
   }
   suggListe.textContent = "";
@@ -956,7 +1219,7 @@ function afficheSuggestions(suggestions) {
       const sup = document.createElement("button");
       sup.type = "button";
       sup.className = "sugg-suppr";
-      sup.textContent = "Supprimer";
+      sup.textContent = t("supprimer");
       sup.addEventListener("click", () => supprimeSuggestion(s.id, sup));
       bloc.appendChild(sup);
     }
@@ -965,14 +1228,14 @@ function afficheSuggestions(suggestions) {
 }
 
 async function chargeSuggestions() {
-  messageListe("Chargement…");
+  messageListe(t("suggChargement"));
   try {
     const r = await fetch(API_SUGG, { cache: "no-store" });
     const d = await r.json();
     if (!r.ok) throw new Error(d.erreur || "erreur " + r.status);
     afficheSuggestions(d.suggestions || []);
   } catch (e) {
-    messageListe("Les propositions ne sont pas consultables pour le moment.");
+    messageListe(t("suggIndispo"));
     suggNombre.textContent = "";
   }
 }
@@ -989,7 +1252,7 @@ async function supprimeSuggestion(id, bouton) {
     afficheSuggestions(d.suggestions || []);
   } catch (e) {
     bouton.disabled = false;
-    erreurSugg("Suppression refusée : " + e.message);
+    erreurSugg(t("suggEchecSuppr", e.message));
   }
 }
 
@@ -1005,14 +1268,14 @@ $("suggestDlg").addEventListener("click", e => { if (e.target === e.currentTarge
 suggEnvoyer.addEventListener("click", async () => {
   const texte = $("suggestTexte").value.trim();
   if (texte.length < 3) {
-    erreurSugg("Décrivez votre suggestion avant d'envoyer.");
+    erreurSugg(t("suggVide"));
     $("suggestTexte").focus();
     return;
   }
   erreurSugg("");
   suggEnvoyer.disabled = true;
   const initial = suggEnvoyer.textContent;
-  suggEnvoyer.textContent = "Envoi…";
+  suggEnvoyer.textContent = t("envoiEnCours");
   try {
     const r = await fetch(API_SUGG, {
       method: "POST",
@@ -1028,7 +1291,7 @@ suggEnvoyer.addEventListener("click", async () => {
     $("suggestTexte").value = "";
     if (d.suggestions) afficheSuggestions(d.suggestions); else chargeSuggestions();
   } catch (e) {
-    erreurSugg("Envoi impossible : " + e.message);
+    erreurSugg(t("suggEchecEnvoi", e.message));
   } finally {
     suggEnvoyer.disabled = false;
     suggEnvoyer.textContent = initial;
@@ -1109,6 +1372,7 @@ function afficheFrequentation(d) {
   }, 500);
 })();
 
-render();
+// pose la langue retenue sur tout le balisage, ce qui déclenche le premier rendu
+appliquerLangue(LANGUE);
 setInterval(() => { if (current === keyOf(Date.now())) render(); }, 60000);
 </script>

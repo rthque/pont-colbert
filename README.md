@@ -46,6 +46,41 @@ node src/build.js
 Si les créneaux eux-mêmes changent, penser à mettre à jour `eventsFor()` dans le gabarit
 et la version texte de la fenêtre.
 
+## Français et anglais
+
+Un bouton posé sous la bascule de thème passe tout le site en anglais. Sans choix
+mémorisé, la langue du navigateur décide : un équipage étranger arrive directement sur la
+version anglaise, un navigateur français reste en français. Le choix est retenu dans le
+stockage local.
+
+Tout le texte visible vit dans le dictionnaire `TEXTES` du gabarit. Le balisage ne porte
+que des clés :
+
+| Attribut | Usage |
+|---|---|
+| `data-i18n` | texte simple |
+| `data-i18n-html` | phrase contenant des balises |
+| `data-i18n-aria` | libellé de lecteur d'écran |
+| `data-i18n-alt` | texte alternatif d'image |
+
+`appliquerLangue()` parcourt ces attributs, reconstruit les formats de date et d'heure,
+puis réengendre la frise. Ajouter une phrase au site revient donc à poser une clé.
+Certaines valeurs sont des fonctions, parce que l'accord au pluriel diffère d'une langue à
+l'autre et qu'un « (s) » se voit.
+
+Le format suit la langue : `14h05` et `9,67 m` en français, `14:05` et `9.67 m` en
+anglais. L'heure reste locale française dans les deux cas — c'est celle du pont.
+
+`build.js` relève toutes les clés employées dans le balisage et dans les appels `t("…")`,
+et **refuse de construire si l'une manque dans l'une des deux langues**. Sans ce contrôle,
+`t()` retomberait silencieusement sur le français : le défaut ne casserait rien, il se
+verrait seulement à l'écran.
+
+**Ce qui reste en français** : le PDF de l'avis et ses deux pages en images. C'est un
+document officiel de la capitainerie ; le traduire en ferait une réécriture sans valeur
+juridique. La version texte dépliable, elle, est traduite, et la version anglaise le
+signale comme traduction de courtoisie.
+
 ## Fréquentation et suggestions
 
 Deux compteurs — **visiteurs uniques** et **visites totales** — tenus par
