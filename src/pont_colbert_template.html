@@ -163,6 +163,11 @@
     font: 700 .72rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
     letter-spacing: .06em;
   }
+  /* posée par le script quand le système sait dessiner les drapeaux */
+  .lang-toggle.drapeau {
+    font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
+    font-size: 1.15rem; letter-spacing: 0;
+  }
   .theme-toggle:hover, .lang-toggle:hover { background: rgba(6, 18, 30, .85); border-color: #F5F0E8; }
   .theme-toggle svg { display: block; width: 19px; height: 19px; }
   .hero-content {
@@ -1082,6 +1087,28 @@ if (document.documentElement.dataset.theme) majCouleurBarre(document.documentEle
 majPhotoHero(themeActuel());
 
 // ---- bascule de langue ----
+// Les drapeaux sont écrits en points de code plutôt qu'en caractères : une paire
+// d'indicateurs régionaux traverse mal les éditeurs et les encodages, alors qu'elle est
+// ici sans ambiguïté. FR = U+1F1EB U+1F1F7, GB = U+1F1EC U+1F1E7.
+const DRAPEAUX = { fr: "\u{1F1EB}\u{1F1F7}", en: "\u{1F1EC}\u{1F1E7}" };
+
+// Windows ne fournit pas de glyphes de drapeaux : la paire s'y affiche en deux lettres
+// encadrées, moins lisibles que les initiales. On mesure donc si les deux indicateurs
+// régionaux se combinent en un seul glyphe, et on retombe sur « FR » / « EN » sinon.
+//
+// Le seuil est fixé à 1,5 fois la largeur d'un indicateur seul, et non à 2 : là où les
+// drapeaux existent la paire fait environ une largeur, là où ils manquent elle en fait
+// deux. Relevé sur Windows, la paire mesurait 13,9 px contre 13,3 px pour deux
+// indicateurs — 4 % d'écart seulement, trop peu pour trancher sur un autre jeu de polices.
+const DRAPEAUX_RENDUS = (() => {
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = "16px sans-serif";
+    return ctx.measureText(DRAPEAUX.fr).width < ctx.measureText("\u{1F1EB}").width * 1.5;
+  } catch (e) {
+    return false; // sans canvas, les initiales font toujours l'affaire
+  }
+})();
 // Le balisage porte les clés du dictionnaire : data-i18n pour du texte simple,
 // data-i18n-html quand la phrase contient des balises, data-i18n-aria et data-i18n-alt
 // pour les libellés destinés aux lecteurs d'écran. Un seul parcours suffit donc, et
@@ -1099,8 +1126,11 @@ function appliquerLangue(langue) {
   for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria));
   for (const el of document.querySelectorAll("[data-i18n-alt]")) el.alt = t(el.dataset.i18nAlt);
 
+  // le bouton montre ce qu'on obtient en cliquant, pas la langue en cours
+  const versLangue = LANGUE === "fr" ? "en" : "fr";
   const btn = $("langBtn");
-  btn.textContent = LANGUE === "fr" ? "EN" : "FR"; // ce qu'on obtient en cliquant
+  btn.textContent = DRAPEAUX_RENDUS ? DRAPEAUX[versLangue] : versLangue.toUpperCase();
+  btn.classList.toggle("drapeau", DRAPEAUX_RENDUS);
   btn.setAttribute("aria-label", t("langueAutre"));
   btn.title = t("langueAutre");
 

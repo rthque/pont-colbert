@@ -53,6 +53,16 @@ mémorisé, la langue du navigateur décide : un équipage étranger arrive dire
 version anglaise, un navigateur français reste en français. Le choix est retenu dans le
 stockage local.
 
+Le bouton montre le drapeau de la langue vers laquelle il fait basculer. **Windows ne
+fournit pas de glyphes de drapeaux** : la paire d'indicateurs régionaux y apparaît en deux
+lettres encadrées. Le script mesure donc si les deux indicateurs se combinent en un seul
+glyphe, et retombe sur « FR » / « EN » sinon. Le seuil est fixé à 1,5 fois la largeur d'un
+indicateur seul : relevé sur Windows, la paire mesurait 13,9 px contre 13,3 px pour deux
+indicateurs, soit 4 % d'écart — trop peu pour trancher avec un seuil à 2.
+
+Les drapeaux sont écrits en points de code et non en caractères : une paire d'indicateurs
+régionaux traverse mal les éditeurs et les encodages.
+
 Tout le texte visible vit dans le dictionnaire `TEXTES` du gabarit. Le balisage ne porte
 que des clés :
 
