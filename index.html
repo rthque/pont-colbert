@@ -290,6 +290,9 @@
     color: var(--go-ink); font-variant-numeric: tabular-nums;
   }
   .compte-quand { font-size: .82rem; color: var(--go-ink); opacity: .85; }
+  /* même registre que le sous-titre des créneaux de la frise : la condition « si navires
+     présents » doit se lire ici aussi, l'ouverture n'étant jamais acquise */
+  .compte-sous { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
 
   .dayhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 15px 0 4px; }
   .dayhead h2 {
@@ -563,6 +566,7 @@
     <span class="compte-lbl" data-i18n="prochaineOuverture">Prochaine ouverture</span>
     <b class="compte-reste" id="compteReste"></b>
     <span class="compte-quand" id="compteQuand"></span>
+    <span class="compte-sous" id="compteSous"></span>
   </div>
 
   <div class="dayhead">
@@ -738,6 +742,7 @@ const TEXTES = {
     compteA: (quoi, heure) => quoi + " · à " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " à " + heure,
     compteMaintenant: "maintenant",
+    compteMoinsUneMinute: "moins d'1 min",
     legOuv: "Ouverture possible", legPM: "Pleine mer", legExc: "Exceptionnelle",
     joursSuivants: "Jours suivants — pleines mers",
     piedSources: "<b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, " +
@@ -839,6 +844,7 @@ const TEXTES = {
     compteA: (quoi, heure) => quoi + " · at " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " at " + heure,
     compteMaintenant: "now",
+    compteMoinsUneMinute: "less than 1 min",
     legOuv: "Possible opening", legPM: "High water", legExc: "Exceptional",
     joursSuivants: "Coming days — high waters",
     piedSources: "<b>Sources.</b> Until 31/12/2026: official SHOM tide times (maree.shom.fr / maree.info, " +
@@ -1124,21 +1130,21 @@ function chercheProchaine(maintenant) {
   for (let i = 0; i < 8; i++) {
     if (jour > MAX_DAY) return null;
     const suivant = eventsFor(jour).evs.find(e => e.cls === "go" && e.ms > maintenant);
-    if (suivant) return { ms: suivant.ms, titre: suivant.title, jour };
+    if (suivant) return { ms: suivant.ms, titre: suivant.title, sous: suivant.sub, jour };
     jour = addDays(jour, 1);
   }
   return null;
 }
 
-// Au-delà de l'heure on tombe les secondes : elles n'apprennent rien et font clignoter le
-// bloc pour rien. En dessous, elles deviennent l'information utile.
+// Pas de secondes : à cette échelle elles n'apprennent rien et feraient clignoter le bloc
+// en permanence. Le reste est arrondi vers le bas, donc annoncé sans flatterie — il reste
+// au moins ce qui est affiché.
 function dureeCourte(ms) {
-  const total = Math.max(0, Math.round(ms / 1000));
-  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
-  const deux = n => String(n).padStart(2, "0");
-  if (h > 0) return h + " h " + deux(m);
-  if (m > 0) return m + " min " + deux(s);
-  return s + " s";
+  const minutes = Math.floor(Math.max(0, ms) / 60000);
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  if (h > 0) return h + " h " + String(m).padStart(2, "0");
+  if (m > 0) return m + " min";
+  return t("compteMoinsUneMinute");
 }
 
 function majCompte(recalculer) {
@@ -1158,6 +1164,7 @@ function majCompte(recalculer) {
   $("compteQuand").textContent = prochaine.jour === keyOf(maintenant)
     ? t("compteA", prochaine.titre, heure)
     : t("compteAutreJour", prochaine.titre, fmtDayShort.format(localToUtc(prochaine.jour, 12, 0)), heure);
+  $("compteSous").textContent = prochaine.sous;
 }
 
 setInterval(majCompte, 1000);
