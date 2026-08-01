@@ -15,6 +15,19 @@ qu'en présence de navires.
 | Heure fixe (quai de la Somme) | 07 h 30 · 18 h 30 |
 | Exceptionnelles | 11 h 30 · 15 h 30 |
 
+Un décompte placé sous la barre de date annonce le temps restant avant la prochaine
+ouverture. Il vise toujours l'instant présent, quel que soit le jour consulté, et rappelle
+donc l'heure visée sous le nombre — avec le jour lorsque le créneau tombe le lendemain.
+
+**Seules les ouvertures possibles y entrent** : marée et heures fixes. Les exceptionnelles
+en sont exclues — l'avis les réserve aux navires EMDT sous condition, un décompte vers
+11 h 30 laisserait croire à une ouverture acquise. La pleine mer aussi, qui n'est pas une
+manœuvre. Au-delà d'une heure les secondes disparaissent : elles n'apprennent rien et font
+clignoter le bloc ; en dessous, elles deviennent l'information utile.
+
+Les numéros de la capitainerie figurent en pied de page, appelables d'une touche depuis un
+téléphone, et en format international dans la version anglaise.
+
 ## Données de marée
 
 - **Jusqu'au 31/12/2026** : horaires officiels SHOM (via maree.shom.fr et maree.info,

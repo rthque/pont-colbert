@@ -228,6 +228,24 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* ---- décompte vers la prochaine ouverture ----
+     Vert du même registre que les créneaux ouvrables, pour qu'on lise d'un coup que le
+     nombre annoncé concerne une ouverture possible et non une pleine mer. */
+  .compte {
+    display: grid; gap: 2px; margin: 14px 0 0; padding: 12px 14px;
+    border-radius: 8px; border: 1px solid var(--go-line); background: var(--go-bg);
+  }
+  .compte[hidden] { display: none; }
+  .compte-lbl {
+    font: 700 .68rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .12em; color: var(--go-ink);
+  }
+  .compte-reste {
+    font: 700 1.9rem/1.05 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    color: var(--go-ink); font-variant-numeric: tabular-nums;
+  }
+  .compte-quand { font-size: .82rem; color: var(--go-ink); opacity: .85; }
+
   .dayhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 15px 0 4px; }
   .dayhead h2 {
     margin: 0; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
@@ -307,6 +325,9 @@
     font-size: .77rem; font-weight: 400; color: var(--ink-soft); line-height: 1.6;
   }
   footer b { font-weight: 700; }
+  /* numéros de la capitainerie : appelables d'une touche depuis un téléphone */
+  footer a { color: var(--ink); font-weight: 700; text-decoration-color: var(--line); white-space: nowrap; }
+  footer a:hover { text-decoration-color: var(--accent); }
 
   dialog {
     max-width: 540px; width: calc(100vw - 32px); border: 1px solid var(--line);
@@ -490,6 +511,14 @@
     <button class="arrow" id="next" type="button" data-i18n-aria="jourSuiv" aria-label="Jour suivant">→</button>
   </nav>
 
+  <!-- Décompte vers la prochaine ouverture possible. Il vise toujours « maintenant »,
+       quel que soit le jour consulté, d'où l'heure rappelée en dessous. -->
+  <div class="compte" id="compte" hidden>
+    <span class="compte-lbl" data-i18n="prochaineOuverture">Prochaine ouverture</span>
+    <b class="compte-reste" id="compteReste"></b>
+    <span class="compte-quand" id="compteQuand"></span>
+  </div>
+
   <div class="dayhead">
     <h2 id="dayTitle"></h2>
     <button class="today-link" id="todayBtn" type="button" hidden data-i18n="aujourdhui">↩ Aujourd'hui</button>
@@ -514,7 +543,7 @@
     2027–2028 : prédiction harmonique (102 composantes) calée sur 2 ans de données SHOM —
     écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique de Dieppe),
     coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.</p>
-    <p data-i18n="piedAvert">Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
+    <p data-i18n-html="piedAvert">Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe reste seule
     décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).</p>
 
     <div class="footer-actions">
@@ -659,6 +688,10 @@ const TEXTES = {
     regles: "Règles",
     navJour: "Choix du jour", jourPrec: "Jour précédent", jourSuiv: "Jour suivant", dateChamp: "Date",
     aujourdhui: "↩ Aujourd'hui",
+    prochaineOuverture: "Prochaine ouverture",
+    compteA: (quoi, heure) => quoi + " · à " + heure,
+    compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " à " + heure,
+    compteMaintenant: "maintenant",
     legOuv: "Ouverture possible", legPM: "Pleine mer", legExc: "Exceptionnelle",
     joursSuivants: "Jours suivants — pleines mers",
     piedSources: "<b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, " +
@@ -666,7 +699,9 @@ const TEXTES = {
       "écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique " +
       "de Dieppe), coefficients 2027–2028 estimés (±3). Heures locales France (Europe/Paris), format 24 h.",
     piedAvert: "Le pont n'est manœuvré qu'en présence de navires. Outil indicatif — la capitainerie de Dieppe " +
-      "reste seule décisionnaire des ouvertures effectives (VHF 12). Webcam : viewsurf.com (ville de Dieppe).",
+      "reste seule décisionnaire des ouvertures effectives : VHF 12, " +
+      '<a href="tel:+33235841055">02 35 84 10 55</a> ou <a href="tel:+33235061256">02 35 06 12 56</a>. ' +
+      "Webcam : viewsurf.com (ville de Dieppe).",
     proposer: "Proposer une amélioration",
     visiteursUniques: "visiteurs uniques", visitesTotales: "visites totales",
 
@@ -754,6 +789,10 @@ const TEXTES = {
     regles: "Rules",
     navJour: "Choose a day", jourPrec: "Previous day", jourSuiv: "Next day", dateChamp: "Date",
     aujourdhui: "↩ Today",
+    prochaineOuverture: "Next opening",
+    compteA: (quoi, heure) => quoi + " · at " + heure,
+    compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " at " + heure,
+    compteMaintenant: "now",
     legOuv: "Possible opening", legPM: "High water", legExc: "Exceptional",
     joursSuivants: "Coming days — high waters",
     piedSources: "<b>Sources.</b> Until 31/12/2026: official SHOM tide times (maree.shom.fr / maree.info, " +
@@ -761,7 +800,9 @@ const TEXTES = {
       "error checked against high waters: ±2 min (7 min max). Heights above chart datum (Dieppe hydrographic " +
       "zero), 2027–2028 coefficients estimated (±3). French local time (Europe/Paris), 24-hour clock.",
     piedAvert: "The bridge is only operated when vessels are present. Indicative tool — the Dieppe harbour " +
-      "master alone decides on actual openings (VHF 12). Webcam: viewsurf.com (city of Dieppe).",
+      "master alone decides on actual openings: VHF 12, " +
+      '<a href="tel:+33235841055">+33 2 35 84 10 55</a> or <a href="tel:+33235061256">+33 2 35 06 12 56</a>. ' +
+      "Webcam: viewsurf.com (city of Dieppe).",
     proposer: "Suggest an improvement",
     visiteursUniques: "unique visitors", visitesTotales: "total visits",
 
@@ -1024,6 +1065,57 @@ function render() {
   }
 }
 
+// ---- décompte vers la prochaine ouverture ----
+// Il vise toujours l'instant présent, quel que soit le jour affiché : c'est la question
+// que se pose un capitaine en ouvrant le site. Seules les ouvertures possibles comptent —
+// marée et heures fixes. Les exceptionnelles en sont exclues : l'avis les réserve aux
+// navires EMDT sous condition, annoncer un décompte vers 11h30 laisserait croire à une
+// ouverture acquise. La pleine mer aussi, qui n'est pas une manœuvre.
+let prochaine = null;
+
+function chercheProchaine(maintenant) {
+  let jour = keyOf(maintenant);
+  for (let i = 0; i < 8; i++) {
+    if (jour > MAX_DAY) return null;
+    const suivant = eventsFor(jour).evs.find(e => e.cls === "go" && e.ms > maintenant);
+    if (suivant) return { ms: suivant.ms, titre: suivant.title, jour };
+    jour = addDays(jour, 1);
+  }
+  return null;
+}
+
+// Au-delà de l'heure on tombe les secondes : elles n'apprennent rien et font clignoter le
+// bloc pour rien. En dessous, elles deviennent l'information utile.
+function dureeCourte(ms) {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+  const deux = n => String(n).padStart(2, "0");
+  if (h > 0) return h + " h " + deux(m);
+  if (m > 0) return m + " min " + deux(s);
+  return s + " s";
+}
+
+function majCompte(recalculer) {
+  const maintenant = Date.now();
+  const bloc = $("compte");
+  const ecoule = prochaine !== null && prochaine.ms <= maintenant;
+  if (recalculer || prochaine === null || ecoule) {
+    prochaine = chercheProchaine(maintenant);
+    if (ecoule) render(); // le créneau vient de passer, la frise doit suivre
+  }
+  if (!prochaine) { bloc.hidden = true; return; }
+
+  bloc.hidden = false;
+  const reste = prochaine.ms - maintenant;
+  $("compteReste").textContent = reste < 1000 ? t("compteMaintenant") : dureeCourte(reste);
+  const heure = hm(prochaine.ms);
+  $("compteQuand").textContent = prochaine.jour === keyOf(maintenant)
+    ? t("compteA", prochaine.titre, heure)
+    : t("compteAutreJour", prochaine.titre, fmtDayShort.format(localToUtc(prochaine.jour, 12, 0)), heure);
+}
+
+setInterval(majCompte, 1000);
+
 // ---- thème clair / sombre ----
 // Sans choix mémorisé, la préférence du système s'applique. Le bouton force un thème
 // et bascule aussi la photo du héro : carte postale ancienne le jour, pont illuminé la nuit.
@@ -1136,6 +1228,7 @@ function appliquerLangue(langue) {
 
   majBoutonTheme();  // son libellé et le texte alternatif de la photo changent aussi
   render();          // la frise, les dates et les jours suivants sont réengendrés
+  majCompte(true);   // le décompte retient le libellé du créneau : il faut le refaire
 }
 
 $("langBtn").addEventListener("click", () => appliquerLangue(LANGUE === "fr" ? "en" : "fr"));
