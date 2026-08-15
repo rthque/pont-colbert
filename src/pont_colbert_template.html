@@ -228,20 +228,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* ---- bascule de point de vue ---- */
-  .vue {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 14px 0 0;
-    padding: 4px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line);
-  }
-  .vue button {
-    padding: 10px 8px; min-height: 42px; border: none; border-radius: 5px; cursor: pointer;
-    background: none; color: var(--ink-soft);
-    font: 700 .78rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
-    text-transform: uppercase; letter-spacing: .07em;
-  }
-  .vue button:hover { color: var(--ink); }
-  .vue button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-
   /* ---- décompte vers la prochaine ouverture ----
      Vert du même registre que les créneaux ouvrables, pour qu'on lise d'un coup que le
      nombre annoncé concerne une ouverture possible et non une pleine mer. */
@@ -522,15 +508,6 @@
     </div>
   </header>
 
-  <!-- Point de vue. Les mêmes créneaux se lisent à l'envers selon qu'on arrive par l'eau
-       ou par la route : une ouverture pour un navire est une interruption pour une
-       voiture. Plutôt que d'afficher les deux vocabulaires côte à côte, ce qui prêterait
-       à confusion, on demande au visiteur d'où il vient. -->
-  <div class="vue" role="group" data-i18n-aria="vueGroupe" aria-label="Point de vue">
-    <button type="button" id="vueMarin" data-i18n="vueMarin">Je navigue</button>
-    <button type="button" id="vueRoute" data-i18n="vueRoute">Je conduis</button>
-  </div>
-
   <nav class="nav" data-i18n-aria="navJour" aria-label="Choix du jour">
     <button class="arrow" id="prev" type="button" data-i18n-aria="jourPrec" aria-label="Jour précédent">←</button>
     <input type="date" id="datePick" min="2026-07-01" max="2028-12-31" data-i18n-aria="dateChamp" aria-label="Date">
@@ -556,7 +533,7 @@
 
   <div class="legend">
     <span><i style="background:var(--go-badge)"></i><span data-i18n="legOuv">Ouverture possible</span></span>
-    <span id="legPMItem"><i style="background:var(--pm-strong)"></i><span data-i18n="legPM">Pleine mer</span></span>
+    <span><i style="background:var(--pm-strong)"></i><span data-i18n="legPM">Pleine mer</span></span>
     <span><i style="background:var(--exc-line)"></i><span data-i18n="legExc">Exceptionnelle</span></span>
   </div>
 
@@ -711,25 +688,17 @@ const TEXTES = {
     camBloquee: "La vidéo ne peut pas s'afficher à l'intérieur de cette page.<br>" +
       '<a href="' + CAM_URL + '" target="_blank" rel="noopener">Ouvrir la webcam dans un onglet ↗</a>',
     sousTitre: "Dieppe · Créneaux d'ouverture",
-    sousTitreRoute: "Dieppe · Coupures de circulation",
-    vueGroupe: "Point de vue", vueMarin: "Je navigue", vueRoute: "Je conduis",
     webcam: "▶ Webcam",
     regles: "Règles",
     navJour: "Choix du jour", jourPrec: "Jour précédent", jourSuiv: "Jour suivant", dateChamp: "Date",
     aujourdhui: "↩ Aujourd'hui",
     prochaineOuverture: "Prochaine ouverture",
-    prochaineOuvertureRoute: "Prochaine coupure possible",
     compteA: (quoi, heure) => quoi + " · à " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " à " + heure,
-    // en vue routière le libellé au-dessus dit déjà « coupure » : on ne le répète pas
-    compteARoute: (quoi, heure) => "à " + heure,
-    compteAutreJourRoute: (quoi, jour, heure) => jour + " à " + heure,
     compteMaintenant: "maintenant",
     compteMoinsUneMinute: "moins d'1 min",
     legOuv: "Ouverture possible", legPM: "Pleine mer", legExc: "Exceptionnelle",
-    legOuvRoute: "Coupure possible", legExcRoute: "Exceptionnelle",
     joursSuivants: "Jours suivants — pleines mers",
-    joursSuivantsRoute: "Jours suivants — coupures possibles",
     piedSources: "<b>Sources.</b> Jusqu'au 31/12/2026 : horaires officiels SHOM (maree.shom.fr / maree.info, " +
       "port de Dieppe). 2027–2028 : prédiction harmonique (102 composantes) calée sur 2 ans de données SHOM — " +
       "écart vérifié sur les pleines mers : ±2 min (max 7 min). Hauteurs en cote marine (zéro hydrographique " +
@@ -791,15 +760,7 @@ const TEXTES = {
     supprimer: "Supprimer",
 
     slotAvant2h: "Passage PM − 2 h", slotAvant45: "Passage PM − 45 min", slotApres45: "Passage PM + 45 min",
-    // Vue routière : « PM − 2 h » ne dit rien à un automobiliste, et le détail du créneau
-    // ne change rien pour lui. Seule compte l'heure, déjà affichée à gauche.
-    slotAvant2hRoute: "Coupure possible", slotAvant45Route: "Coupure possible",
-    slotApres45Route: "Coupure possible", ouvFixeRoute: "Coupure possible",
-    ouvExcRoute: "Coupure exceptionnelle",
     sousMaree: "Ouverture sur marée — si navires présents",
-    sousMareeRoute: "Passage coupé si un navire se présente",
-    sousFixeRoute: "Quai de la Somme — passage coupé si un navire se présente",
-    sousExcRoute: "Seulement si contrainte technique, mer dégradée ou force majeure",
     pleineMer: "Pleine mer",
     sousPleineMer: "Pas de manœuvre à la pleine mer même",
     coeff: (v, estime) => (estime ? "coeff ≈ " : "coeff ") + v,
@@ -829,24 +790,17 @@ const TEXTES = {
     camBloquee: "The video cannot be shown inside this page.<br>" +
       '<a href="' + CAM_URL + '" target="_blank" rel="noopener">Open the webcam in a new tab ↗</a>',
     sousTitre: "Dieppe · Bridge opening slots",
-    sousTitreRoute: "Dieppe · Road closures",
-    vueGroupe: "Point of view", vueMarin: "Sailing", vueRoute: "Driving",
     webcam: "▶ Webcam",
     regles: "Rules",
     navJour: "Choose a day", jourPrec: "Previous day", jourSuiv: "Next day", dateChamp: "Date",
     aujourdhui: "↩ Today",
     prochaineOuverture: "Next opening",
-    prochaineOuvertureRoute: "Next possible closure",
     compteA: (quoi, heure) => quoi + " · at " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " at " + heure,
-    compteARoute: (quoi, heure) => "at " + heure,
-    compteAutreJourRoute: (quoi, jour, heure) => jour + " at " + heure,
     compteMaintenant: "now",
     compteMoinsUneMinute: "less than 1 min",
     legOuv: "Possible opening", legPM: "High water", legExc: "Exceptional",
-    legOuvRoute: "Possible closure", legExcRoute: "Exceptional",
     joursSuivants: "Coming days — high waters",
-    joursSuivantsRoute: "Coming days — possible closures",
     piedSources: "<b>Sources.</b> Until 31/12/2026: official SHOM tide times (maree.shom.fr / maree.info, " +
       "port of Dieppe). 2027–2028: harmonic prediction (102 constituents) fitted on 2 years of SHOM data — " +
       "error checked against high waters: ±2 min (7 min max). Heights above chart datum (Dieppe hydrographic " +
@@ -905,13 +859,7 @@ const TEXTES = {
     supprimer: "Delete",
 
     slotAvant2h: "Transit HW − 2 h", slotAvant45: "Transit HW − 45 min", slotApres45: "Transit HW + 45 min",
-    slotAvant2hRoute: "Possible closure", slotAvant45Route: "Possible closure",
-    slotApres45Route: "Possible closure", ouvFixeRoute: "Possible closure",
-    ouvExcRoute: "Exceptional closure",
     sousMaree: "Tide-based opening — if vessels are present",
-    sousMareeRoute: "Road closed if a vessel turns up",
-    sousFixeRoute: "Quai de la Somme — road closed if a vessel turns up",
-    sousExcRoute: "Only in case of technical constraint, deteriorated sea state or force majeure",
     pleineMer: "High water",
     sousPleineMer: "No opening at high water itself",
     coeff: (v, estime) => (estime ? "coeff. ≈ " : "coeff. ") + v,
@@ -948,27 +896,6 @@ let LANGUE = (function () {
 function t(cle, ...args) {
   const v = TEXTES[LANGUE][cle] !== undefined ? TEXTES[LANGUE][cle] : TEXTES.fr[cle];
   return typeof v === "function" ? v(...args) : v;
-}
-
-// ---- point de vue : depuis un navire ou depuis la route ----
-// Une même manœuvre est une ouverture pour un bateau et une coupure pour une voiture :
-// les deux publics lisent le même horaire à l'envers l'un de l'autre. Les clés suffixées
-// « Route » remplacent leur homologue en vue routière ; les autres servent aux deux, ce
-// qui évite de dupliquer tout le dictionnaire.
-const PUBLIC_KEY = "pc-public";
-let PUBLIC = (function () {
-  try {
-    const memo = localStorage.getItem(PUBLIC_KEY);
-    if (memo === "marin" || memo === "route") return memo;
-  } catch (e) { /* stockage refusé */ }
-  return "marin";
-})();
-
-function tp(cle, ...args) {
-  const variante = cle + "Route";
-  return PUBLIC === "route" && TEXTES.fr[variante] !== undefined
-    ? t(variante, ...args)
-    : t(cle, ...args);
 }
 
 const TZ = "Europe/Paris";
@@ -1040,7 +967,7 @@ function eventsFor(dayStr) {
     for (const [off, cle] of slots) {
       const ms = pmMs + off * 60000;
       if (keyOf(ms) !== dayStr) continue;
-      evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: tp(cle), sub: tp("sousMaree") });
+      evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: t(cle), sub: t("sousMaree") });
     }
     if (keyOf(pmMs) === dayStr) {
       evs.push({
@@ -1053,11 +980,11 @@ function eventsFor(dayStr) {
   }
   for (const [hh, mm] of [[7, 30], [18, 30]]) {
     const ms = localToUtc(dayStr, hh, mm);
-    evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: tp("ouvFixe"), sub: tp("sousFixe") });
+    evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: t("ouvFixe"), sub: t("sousFixe") });
   }
   for (const [hh, mm] of [[11, 30], [15, 30]]) {
     const ms = localToUtc(dayStr, hh, mm);
-    evs.push({ ms, cls: "exc", ico: "exc", big: hm(ms), title: tp("ouvExc"), sub: tp("sousExc") });
+    evs.push({ ms, cls: "exc", ico: "exc", big: hm(ms), title: t("ouvExc"), sub: t("sousExc") });
   }
   evs.sort((a, b) => a.ms - b.ms);
   return { evs, anyPred, anyData };
@@ -1094,12 +1021,7 @@ function render() {
   $("todayBtn").hidden = (current === todayKey);
   const dayMs = localToUtc(current, 12, 0);
   $("dayTitle").textContent = fmtDay.format(dayMs);
-  const rendu = eventsFor(current);
-  const { anyPred, anyData } = rendu;
-  // La pleine mer n'intéresse pas un automobiliste : ce n'est pas une manœuvre, donc
-  // jamais une coupure. Hauteur et coefficient disparaissent avec elle.
-  const evs = PUBLIC === "route" ? rendu.evs.filter(e => e.cls !== "pm") : rendu.evs;
-  $("legPMItem").hidden = PUBLIC === "route";
+  const { evs, anyPred, anyData } = eventsFor(current);
   const chip = $("srcChip");
   if (!anyData) { chip.textContent = t("chipHors"); chip.className = "chip pred"; }
   else if (anyPred) { chip.textContent = t("chipPred"); chip.className = "chip pred"; }
@@ -1137,18 +1059,11 @@ function render() {
   for (let i = 1; i <= 6; i++) {
     const k = addDays(current, i);
     if (k > MAX_DAY) break;
+    const highs = (byDay.get(k) || []).filter(mar => mar[2]);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "nextday";
-    // vue marine : les pleines mers et leur coefficient ; vue routière : les heures où le
-    // passage peut être coupé, seule chose qui concerne un automobiliste
-    let pms;
-    if (PUBLIC === "route") {
-      pms = eventsFor(k).evs.filter(e => e.cls === "go").map(e => hm(e.ms)).join(" · ");
-    } else {
-      const highs = (byDay.get(k) || []).filter(mar => mar[2]);
-      pms = highs.map(mar => hm(mar[0] * 60000) + (mar[3] ? " <small>(" + (mar[4] ? "≈" : "") + mar[3] + ")</small>" : "")).join(" · ");
-    }
+    const pms = highs.map(mar => hm(mar[0] * 60000) + (mar[3] ? " <small>(" + (mar[4] ? "≈" : "") + mar[3] + ")</small>" : "")).join(" · ");
     btn.innerHTML = '<span class="d"></span><span class="pms">' + (pms || "—") + "</span>";
     btn.querySelector(".d").textContent = fmtDayShort.format(localToUtc(k, 12, 0));
     btn.addEventListener("click", () => { current = k; showPast = false; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
@@ -1201,8 +1116,8 @@ function majCompte(recalculer) {
   $("compteReste").textContent = reste < 1000 ? t("compteMaintenant") : dureeCourte(reste);
   const heure = hm(prochaine.ms);
   $("compteQuand").textContent = prochaine.jour === keyOf(maintenant)
-    ? tp("compteA", prochaine.titre, heure)
-    : tp("compteAutreJour", prochaine.titre, fmtDayShort.format(localToUtc(prochaine.jour, 12, 0)), heure);
+    ? t("compteA", prochaine.titre, heure)
+    : t("compteAutreJour", prochaine.titre, fmtDayShort.format(localToUtc(prochaine.jour, 12, 0)), heure);
   $("compteSous").textContent = prochaine.sous;
 }
 
@@ -1305,15 +1220,10 @@ function appliquerLangue(langue) {
   document.title = t("titrePage");
   reglerFormats();
 
-  // tp() et non t() : les clés ayant une variante « Route » suivent le point de vue
-  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = tp(el.dataset.i18n);
-  for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = tp(el.dataset.i18nHtml);
-  for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", tp(el.dataset.i18nAria));
-  for (const el of document.querySelectorAll("[data-i18n-alt]")) el.alt = tp(el.dataset.i18nAlt);
-
-  for (const [id, vue] of [["vueMarin", "marin"], ["vueRoute", "route"]]) {
-    $(id).setAttribute("aria-pressed", String(PUBLIC === vue));
-  }
+  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  for (const el of document.querySelectorAll("[data-i18n-alt]")) el.alt = t(el.dataset.i18nAlt);
 
   // le bouton montre ce qu'on obtient en cliquant, pas la langue en cours
   const versLangue = LANGUE === "fr" ? "en" : "fr";
@@ -1329,17 +1239,6 @@ function appliquerLangue(langue) {
 }
 
 $("langBtn").addEventListener("click", () => appliquerLangue(LANGUE === "fr" ? "en" : "fr"));
-
-// Changer de point de vue rejoue exactement le même rafraîchissement qu'un changement de
-// langue — libellés, frise, jours suivants, décompte — puisque c'est la même substitution
-// de dictionnaire qui opère.
-function appliquerVue(vue) {
-  PUBLIC = vue;
-  try { localStorage.setItem(PUBLIC_KEY, vue); } catch (e) { /* stockage indisponible */ }
-  appliquerLangue(LANGUE);
-}
-$("vueMarin").addEventListener("click", () => appliquerVue("marin"));
-$("vueRoute").addEventListener("click", () => appliquerVue("route"));
 majBoutonTheme();
 
 // ---- webcam ----
