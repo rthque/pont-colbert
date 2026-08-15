@@ -154,6 +154,11 @@ const LANGUES = { français: blocAccolades(html, '  fr: {'), anglais: blocAccola
 const clesUtilisees = new Set();
 for (const m of html.matchAll(/data-i18n(?:-html|-aria|-alt)?="([^"]+)"/g)) clesUtilisees.add(m[1]);
 for (const m of html.matchAll(/\bt\("([A-Za-z0-9]+)"/g)) clesUtilisees.add(m[1]);
+// Les variantes de point de vue sont construites à l'exécution (clé + « Route ») : elles
+// échappent au relevé ci-dessus, on les ajoute donc depuis le dictionnaire français.
+for (const m of LANGUES.français.matchAll(/(^|[\s{,])([A-Za-z][A-Za-z0-9]*Route)\s*:/g)) {
+  clesUtilisees.add(m[2]);
+}
 if (clesUtilisees.size < 40) throw new Error(`traductions : ${clesUtilisees.size} clés seulement, extraction douteuse`);
 for (const cle of clesUtilisees) {
   for (const [langue, bloc] of Object.entries(LANGUES)) {
