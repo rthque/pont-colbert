@@ -28,32 +28,37 @@ const BATTEMENT = 1800;
 const AGE_MAX = 30 * 24 * 3600;
 
 // ---------------------------------------------------------------------------
-// AMONT — à renseigner avec le résultat de « node src/sonde_statut.mjs »
+// AMONT — à renseigner avec le résultat de la capture de trafic Citykomi
 // ---------------------------------------------------------------------------
-// Trois formes d'amont sont prévues, parce que la sonde peut en désigner n'importe
-// laquelle et qu'on ne saura qu'après l'avoir lancée depuis un réseau non filtré :
+// Le statut est diffusé par Citykomi, qui ne documente pas d'API publique. Le point
+// d'entrée se relève sur l'appareil, en interceptant le trafic de l'application, puis
+// s'analyse avec :
 //
-//   'wordpress' — API REST d'un site WordPress (…/wp-json/wp/v2/posts). Forme connue,
-//                 rien à configurer d'autre que l'adresse.
-//   'flux'      — RSS ou Atom. Forme connue également.
-//   'json'      — n'importe quel JSON : on indique où trouver la liste, le texte et la
-//                 date au moyen de chemins pointés. C'est par là que passera Citykomi
-//                 une fois son point d'entrée identifié.
+//   node src/citykomi_traces.mjs capture.har
 //
-// L'adresse ci-dessous est le candidat le mieux classé a priori, PAS une adresse vérifiée.
-// Tant que la sonde n'a pas confirmé, le collecteur échouera proprement et le site
-// n'affichera rien — ce qui est le comportement voulu.
+// qui imprime le bloc à recopier ici. La marche à suivre complète est au README,
+// section « Statut en direct ».
+//
+// Trois formes sont prévues. 'json' est celle de Citykomi : on dit où trouver la liste,
+// le texte et la date au moyen de chemins pointés. 'wordpress' et 'flux' restent
+// disponibles si le statut finit par être publié sur une source web ordinaire.
+//
+// url reste vide tant que la capture n'a pas eu lieu : le collecteur échoue alors
+// franchement, plutôt que d'interroger une adresse devinée.
 const AMONT = {
-  forme: 'wordpress',
-  url: 'https://pontcolbert.portsdenormandie.fr/wp-json/wp/v2/posts?per_page=5&orderby=date',
+  forme: 'json',
+  url: '',
 
-  // Utilisé seulement quand forme === 'json'. Chemins pointés dans la réponse ;
-  // « [] » désigne la racine si la réponse est déjà un tableau.
-  champs: { liste: '[]', texte: 'message', date: 'date' },
+  // Exemple de ce qu'imprime citykomi_traces.mjs ; à remplacer par les vrais chemins.
+  // « texte » accepte un chemin ou une liste de chemins.
+  champs: { liste: 'data.messages', texte: ['title', 'body'], date: 'publishedAt' },
+
+  // En-têtes exigés par l'amont, s'il en exige. Un appel anonyme n'en a pas besoin ; un
+  // appel lié à un appareil en aura, et la question de sa durée de vie se posera alors —
+  // voir le README.
+  entetes: {},
 };
 
-// Un agent qui se nomme. Un en-tête HTTP ne transporte que des octets latin-1 : ni accent
-// ni tiret cadratin ici, sinon la requête est refusée avant de partir.
 const AGENT = 'pont-colbert.fr/statut (+https://pont-colbert.fr; 1 req/min)';
 
 const DELAI = 10000;
@@ -188,8 +193,14 @@ const ADAPTATEURS = {
     const liste = valeurAuChemin(donnees, AMONT.champs.liste);
     const premier = Array.isArray(liste) ? liste[0] : liste;
     if (!premier) return null;
+    // « texte » accepte un chemin ou plusieurs : le statut tient souvent dans le titre
+    // (« Pont Colbert ouvert ») tandis que le corps ajoute la circonstance. Les concaténer
+    // laisse l'en-tête en tête, là où la lecture l'attend.
+    const morceaux = [].concat(AMONT.champs.texte)
+      .map(c => sansBalises(valeurAuChemin(premier, c)))
+      .filter(Boolean);
     return {
-      texte: sansBalises(valeurAuChemin(premier, AMONT.champs.texte)),
+      texte: morceaux.join('. '),
       date: versDate(valeurAuChemin(premier, AMONT.champs.date)),
     };
   },
@@ -198,6 +209,8 @@ const ADAPTATEURS = {
 async function interrogerAmont() {
   const adaptateur = ADAPTATEURS[AMONT.forme];
   if (!adaptateur) throw new Error(`forme d'amont inconnue : ${AMONT.forme}`);
+  // Sans adresse, on ne devine pas : le collecteur se tait et le site n'affiche rien.
+  if (!AMONT.url) throw new Error('AMONT.url non renseigné — voir README, « Statut en direct »');
 
   const r = await fetch(AMONT.url, {
     headers: {
@@ -206,6 +219,7 @@ async function interrogerAmont() {
         ? 'application/rss+xml, application/atom+xml, application/xml;q=0.9'
         : 'application/json',
       'accept-language': 'fr-FR,fr;q=0.9',
+      ...AMONT.entetes,
     },
     // Le cron cadence déjà : un cache intermédiaire ne ferait que retarder l'information.
     cache: 'no-store',

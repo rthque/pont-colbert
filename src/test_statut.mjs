@@ -7,13 +7,19 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const racine = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const charge = async rel => {
-  const source = readFileSync(path.join(racine, rel), 'utf8');
-  return import('data:text/javascript;charset=utf-8,' + encodeURIComponent(source));
-};
+const chargeSource = src => import('data:text/javascript;charset=utf-8,' + encodeURIComponent(src));
+const lit = rel => readFileSync(path.join(racine, rel), 'utf8');
 
-const collecteur = await charge('workers/statut/index.js');
-const service = await charge('functions/api/statut.js');
+const source = lit('workers/statut/index.js');
+
+// AMONT est une constante de module : plutôt que d'ouvrir une porte dans le code de
+// production pour les besoins du test, on charge deux fois la même source — une fois avec
+// l'adresse pointée sur un amont factice, une fois telle qu'elle est livrée.
+const AVEC_URL = "  url: 'https://amont.test/messages',";
+if (!source.includes("  url: '',")) throw new Error('AMONT.url n\'est plus vide dans la source livrée');
+const collecteur = await chargeSource(source.replace("  url: '',", AVEC_URL));
+const collecteurNu = await chargeSource(source);
+const service = await chargeSource(lit('functions/api/statut.js'));
 
 // --- espace KV simulé --------------------------------------------------------
 const kvFactice = () => {
@@ -29,12 +35,11 @@ const kvFactice = () => {
 const env = kv => ({ ETAT: kv, MODERATION_JETON: 'jeton-de-test' });
 
 // --- amont simulé : on remplace fetch, la forme attendue est celle de WordPress ---------
-const articleWP = (texte, date) => JSON.stringify([{
-  title: { rendered: texte },
-  excerpt: { rendered: '' },
-  // WordPress rend date_gmt sans suffixe de fuseau ; le collecteur y ajoute le Z.
-  date_gmt: date.toISOString().replace(/Z$/, ''),
-}]);
+// La forme que rend Citykomi, telle que AMONT.champs la décrit : une liste sous
+// data.messages, le statut dans le titre, la circonstance dans le corps.
+const messageCK = (titre, date, corps = '') => JSON.stringify({
+  data: { messages: [{ title: titre, body: corps, publishedAt: date.toISOString() }] },
+});
 const amontRend = corps => { globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => corps }); };
 const amontRefuse = statut => { globalThis.fetch = async () => ({ ok: false, status: statut, text: async () => '' }); };
 const amontTombe = () => { globalThis.fetch = async () => { throw new Error('ECONNRESET'); }; };
@@ -94,7 +99,7 @@ const plus = (d, minutes) => new Date(d.getTime() + minutes * 60000);
 
 await verifie('premier relevé : écrit', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   const b = await collecteur.collecter(env(kv), T0);
   egal(b.ecrit, true, 'écrit');
   egal(b.motif, 'premier relevé', 'motif');
@@ -103,7 +108,7 @@ await verifie('premier relevé : écrit', async () => {
 
 await verifie('statut inchangé : aucune écriture', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   await collecteur.collecter(env(kv), T0);
   const avant = kv.ecritures;
   // Dix passages de cron dans la demi-heure qui suit.
@@ -113,7 +118,7 @@ await verifie('statut inchangé : aucune écriture', async () => {
 
 await verifie('battement : réécrit au bout de 30 min', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   await collecteur.collecter(env(kv), T0);
   egal((await collecteur.collecter(env(kv), plus(T0, 29))).ecrit, false, 'à 29 min');
   const b = await collecteur.collecter(env(kv), plus(T0, 30));
@@ -124,9 +129,9 @@ await verifie('battement : réécrit au bout de 30 min', async () => {
 
 await verifie('changement d\'état : écrit', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   await collecteur.collecter(env(kv), T0);
-  amontRend(articleWP('Pont Colbert fermé', plus(T0, 5)));
+  amontRend(messageCK('Pont Colbert fermé', plus(T0, 5)));
   const b = await collecteur.collecter(env(kv), plus(T0, 5));
   egal(b.motif, 'changement', 'motif');
   egal(JSON.parse(kv.boite.get('statut')).etat, 'ferme', 'état stocké');
@@ -137,7 +142,7 @@ await verifie('budget d\'écritures tenable sur 24 h', async () => {
   // 1 440 passages de cron, l'état ne changeant que 20 fois dans la journée.
   for (let m = 0; m < 1440; m++) {
     const change = m % 72 === 0;
-    amontRend(articleWP(change && (m / 72) % 2 ? 'Pont Colbert fermé' : 'Pont Colbert ouvert',
+    amontRend(messageCK(change && (m / 72) % 2 ? 'Pont Colbert fermé' : 'Pont Colbert ouvert',
       change ? plus(T0, m) : plus(T0, Math.floor(m / 72) * 72)));
     await collecteur.collecter(env(kv), plus(T0, m));
   }
@@ -148,7 +153,7 @@ await verifie('budget d\'écritures tenable sur 24 h', async () => {
 
 await verifie('amont en panne : rien n\'est touché', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   await collecteur.collecter(env(kv), T0);
   const garde = kv.boite.get('statut');
 
@@ -169,7 +174,7 @@ await verifie('amont qui limite le débit (429) : on repasse plus tard', async (
 
 await verifie('message trop ancien : pas de statut', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', new Date('2025-01-01T00:00:00Z')));
+  amontRend(messageCK('Pont Colbert ouvert', new Date('2025-01-01T00:00:00Z')));
   const b = await collecteur.collecter(env(kv), T0);
   egal(b.ecrit, false, 'écrit');
   egal(b.motif, 'message trop ancien', 'motif');
@@ -177,12 +182,32 @@ await verifie('message trop ancien : pas de statut', async () => {
 
 await verifie('message sans statut : pas d\'écriture', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Réunion publique le 7 avril', T0));
+  amontRend(messageCK('Réunion publique le 7 avril', T0));
   egal((await collecteur.collecter(env(kv), T0)).motif, 'message sans statut lisible', 'motif');
 });
 
+await verifie('titre et corps concaténés', async () => {
+  const kv = kvFactice();
+  // Le statut est dans le titre, la circonstance dans le corps : les deux doivent arriver
+  // à la lecture, l'en-tête en tête.
+  amontRend(messageCK('Pont Colbert fermé', T0, 'Passage de navires en cours.'));
+  const b = await collecteur.collecter(env(kv), T0);
+  egal(b.ecrit, true, 'écrit');
+  egal(JSON.parse(kv.boite.get('statut')).confiance, 'entete', 'confiance');
+  egal(JSON.parse(kv.boite.get('statut')).etat, 'ferme', 'état');
+});
+
+await verifie('AMONT non renseigné : le collecteur se tait', async () => {
+  const kv = kvFactice();
+  amontRend(messageCK('Pont Colbert ouvert', T0));
+  const b = await collecteurNu.collecter(env(kv), T0);
+  egal(b.ecrit, false, 'écrit');
+  if (!/AMONT\.url/.test(b.motif)) throw new Error('motif : ' + b.motif);
+  egal(kv.ecritures, 0, 'écritures');
+});
+
 await verifie('sans espace KV lié : erreur explicite', async () => {
-  amontRend(articleWP('Pont Colbert ouvert', T0));
+  amontRend(messageCK('Pont Colbert ouvert', T0));
   try { await collecteur.collecter({}, T0); throw new Error('aurait dû lever'); }
   catch (e) { if (!/ETAT/.test(e.message)) throw new Error('liaison non nommée : ' + e.message); }
 });
@@ -199,7 +224,7 @@ await verifie('aucun relevé : état nul, non frais', async () => {
 
 await verifie('relevé frais : état servi', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', new Date()));
+  amontRend(messageCK('Pont Colbert ouvert', new Date()));
   await collecteur.collecter(env(kv));
   const d = await sert(kv);
   egal([d.etat, d.frais], ['ouvert', true], 'réponse');
@@ -232,7 +257,7 @@ await verifie('sans espace KV lié : 503 nommant la liaison', async () => {
 
 await verifie('la lecture ne provoque aucune écriture', async () => {
   const kv = kvFactice();
-  amontRend(articleWP('Pont Colbert ouvert', new Date()));
+  amontRend(messageCK('Pont Colbert ouvert', new Date()));
   await collecteur.collecter(env(kv));
   const avant = kv.ecritures;
   for (let i = 0; i < 20; i++) await sert(kv);

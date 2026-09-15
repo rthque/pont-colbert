@@ -309,8 +309,12 @@
     font: 700 .68rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
     text-transform: uppercase; letter-spacing: .12em;
   }
+  /* une phrase, et non plus un mot : « Pont ferme a la circulation - passage de
+     navires » doit tenir sans ecraser le decompte qui la suit. D'ou une taille
+     nettement moindre que celle du decompte, et un interligne qui respire. */
   .etat-mot {
-    font: 700 1.6rem/1.05 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    font: 700 1.22rem/1.25 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-wrap: balance;
   }
   .etat-quand { font-size: .82rem; opacity: .85; }
   .etat.ouvert .etat-lbl, .etat.ouvert .etat-mot, .etat.ouvert .etat-quand { color: var(--go-ink); }
@@ -774,7 +778,8 @@ const TEXTES = {
     aujourdhui: "↩ Aujourd'hui",
     prochaineOuverture: "Prochaine ouverture",
     etatLbl: "En ce moment", etatSource: "annoncé par Ports de Normandie",
-    etatOuvert: "Ouvert à la circulation", etatFerme: "Fermé à la circulation",
+    etatOuvert: "Pont ouvert à la circulation",
+    etatFerme: "Pont fermé à la circulation – passage de navires",
     etatDepuis: h => "depuis " + h,
     compteA: (quoi, heure) => quoi + " · à " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " à " + heure,
@@ -879,7 +884,8 @@ const TEXTES = {
     aujourdhui: "↩ Today",
     prochaineOuverture: "Next opening",
     etatLbl: "Right now", etatSource: "as announced by Ports de Normandie",
-    etatOuvert: "Open to traffic", etatFerme: "Closed to traffic",
+    etatOuvert: "Bridge open to traffic",
+    etatFerme: "Bridge closed to traffic – ships passing",
     etatDepuis: h => "since " + h,
     compteA: (quoi, heure) => quoi + " · at " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " at " + heure,
@@ -1164,10 +1170,11 @@ function render() {
 // préfère ne rien dire plutôt qu'affirmer un état qu'il ne peut plus dater : se fier à un
 // « ouvert » vieux de trois heures ferait traverser la ville pour rien.
 //
-// SENS DES MOTS. Sur un pont tournant, « ouvert » est ambigu : ouvert aux navires veut dire
-// coupé à la route, et l'inverse. Les libellés retenus ici sont ceux du feu vert routier.
-// Si les messages réels disent l'inverse, il n'y a que les clés etatOuvert et etatFerme à
-// échanger dans les deux dictionnaires — rien d'autre ne dépend de ce choix.
+// POINT DE VUE. « Ouvert » seul est ambigu sur un pont tournant : ouvert aux navires veut
+// dire coupé à la route, et l'inverse. Les libellés sont donc écrits du point de vue de
+// l'usager de la route — c'est ce que l'on vient vérifier ici — et nomment la circulation
+// explicitement, jamais le mot seul. Le vert va au passage possible, le rouge à la coupure.
+// Le diffuseur, lui, reste cité tel quel : seul l'affichage est levé de son ambiguïté.
 const API_STATUT = "/api/statut";
 const RELEVE_STATUT = 60000;  // le collecteur ne va pas plus vite : inutile de demander plus
 

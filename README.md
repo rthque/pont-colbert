@@ -188,34 +188,122 @@ node src/test_suggestions.mjs
 
 ## Statut en direct
 
-Le pont est ouvert ou fermé ; Ports de Normandie l'annonce par le diffuseur Citykomi
-« PONT COLBERT - DIEPPE ». Ce statut est republié ici en quasi-temps réel.
+Le pont est ouvert ou fermé à la circulation ; Ports de Normandie l'annonce par le
+diffuseur Citykomi « PONT COLBERT - DIEPPE ». Ce statut est republié ici en quasi-temps
+réel. Citykomi ne documente aucune API publique : le point d'entrée se relève sur
+l'appareil, dans l'ordre ci-dessous.
 
-### La voie retenue
+### Étape 1 — chercher un accès web
 
-Trois voies étaient possibles : lire une source web (A), intercepter le trafic de
-l'application (B), émuler Android et lire l'écran (C). **Seule A mérite d'être tentée**, et
-tout est écrit pour elle. B et C demandent une machine allumée en permanence pour
-republier ce qui est, de toute façon, une information publique ; C ajoute un émulateur et
-de l'OCR, soit une chaîne fragile pour deux mots.
+Le moins cher, et le plus probable pour un service qui met en avant le partage de ses
+messages. À tenter dans un navigateur de bureau, DevTools ouverts sur l'onglet Réseau,
+filtre **Fetch/XHR** :
 
-Citykomi annonce publiquement « des API pour connecter Citykomi à vos outils », sans
-documentation ouverte. Deux pistes, donc, et la sonde tranche :
+| À essayer | Ce qu'on cherche |
+|---|---|
+| Le bouton « partager » d'un message, dans l'appli | l'adresse qu'il produit — c'est le lien public, s'il existe |
+| Le QR code d'abonnement du diffuseur (affiches, site de Ports de Normandie), lu par un lecteur de QR ordinaire | l'identifiant du diffuseur, souvent en clair dans l'URL |
+| `https://app.citykomi.com/`, `https://web.citykomi.com/`, `https://m.citykomi.com/` | une version web ou PWA |
+| `https://www.citykomi.com/trouver-un-diffuseur/` | la recherche de diffuseur appelle une API : elle est dans l'onglet Réseau |
+| `view-source:` sur la page du diffuseur chez Ports de Normandie, chercher `citykomi` | un widget intégré, donc une adresse d'API en clair |
+| Sur un moteur : `site:citykomi.com colbert`, `inurl:citykomi message`, `"citykomi" "pont colbert"` | une page de message indexée |
+
+**Ce qu'il faut relever** : dès qu'une page affiche un message dans un navigateur, l'appel
+JSON est dans l'onglet Réseau. Clic droit sur la requête → **Copy → Copy all as HAR**,
+enregistrer, puis passer à l'analyse (plus bas). Si rien n'affiche de message dans un
+navigateur, l'étape 1 a échoué : passer à l'étape 2.
+
+### Étape 2 — intercepter le trafic de l'appli
+
+**HTTP Toolkit est la voie courte** : il pose le certificat lui-même sur un émulateur ou un
+appareil rooté, ce qui est justement le point qui fait échouer la plupart des tentatives.
+
+Depuis Android 7, une application ignore les autorités installées par l'utilisateur, sauf
+mention contraire dans sa configuration réseau. Un proxy posé sur un téléphone ordinaire ne
+verra donc rien. Il faut un magasin **système**, donc un émulateur ou un appareil rooté.
+
+1. Créer un AVD dans Android Studio avec une image **Google APIs**, surtout **pas** une
+   image *Play Store* : celles-ci n'autorisent pas `adb root`, et tout le reste en dépend.
+2. Lancer HTTP Toolkit, choisir *Android device via ADB*, démarrer l'émulateur. Le
+   certificat est injecté automatiquement.
+3. Installer Citykomi dans l'émulateur, s'abonner au diffuseur « PONT COLBERT - DIEPPE »,
+   ouvrir la liste des messages et tirer pour rafraîchir.
+4. Exporter la capture en HAR.
+
+Par mitmproxy, si l'on préfère :
 
 ```bash
-node src/sonde_statut.mjs          # --verbeux pour voir les corps de réponse
+emulator -avd <nom> -writable-system -http-proxy 127.0.0.1:8080
+adb root && adb remount
+# Android nomme les certificats d'après l'empreinte du sujet
+openssl x509 -inform PEM -subject_hash_old -in ~/.mitmproxy/mitmproxy-ca-cert.pem | head -1
+adb push ~/.mitmproxy/mitmproxy-ca-cert.pem /system/etc/security/cacerts/<empreinte>.0
+adb shell chmod 644 /system/etc/security/cacerts/<empreinte>.0 && adb reboot
 ```
 
-Elle interroge, dans l'ordre, l'API REST du site de Ports de Normandie, ses flux, ses pages
-— où elle repère les adresses embarquées — puis les hôtes Citykomi plausibles, et classe ce
-qui répond. Elle distingue aussi un réseau filtré d'un refus des sources : des hôtes sans
-rapport qui répondent tous le même code ne se sont pas concertés. **Cette sonde n'a pas
-encore été lancée depuis un réseau ordinaire** : elle l'a été depuis un conteneur dont les
-sorties HTTPS sont filtrées, et n'a donc rien pu conclure.
+**Si l'appli épingle son certificat** — le symptôme est net : le proxy journalise des échecs
+de poignée de main TLS pendant que l'appli affiche « pas de réseau » — deux sorties, de la
+plus simple à la moins :
 
-Si aucune source ne porte le statut, alors seulement passer à B : capturer le trafic de
-l'application avec mitmproxy, relever l'adresse appelée, et la donner à la sonde
-(`--url`). Le collecteur ci-dessous n'a pas à changer pour autant.
+```bash
+npx apk-mitm citykomi.apk          # réécrit la config réseau, retire l'épinglage, à réinstaller
+```
+
+```bash
+frida -U -f com.obdo.citykomi -l frida-android-repinning.js   # sans réinstaller, appareil rooté
+objection --gadget com.obdo.citykomi explore                  # puis : android sslpinning disable
+```
+
+### Analyser la capture
+
+Quel que soit le chemin, la capture s'analyse par :
+
+```bash
+node src/citykomi_traces.mjs capture.har
+```
+
+Le script isole les appels Citykomi, les classe, désigne le meilleur candidat, **décode la
+durée de vie du jeton s'il s'agit d'un JWT**, et imprime le bloc `AMONT` prêt à recopier
+dans `workers/statut/index.js`.
+
+Les valeurs de jetons et d'identifiants d'appareil y sont **masquées** — type, longueur,
+empreinte courte — afin que la sortie puisse être transmise telle quelle. Un jeton collé
+dans un fil de discussion est un jeton à révoquer. `--brut` lève le masque, pour un usage
+local seulement.
+
+### Étape 3 — l'endpoint est-il exploitable depuis un Worker ?
+
+Un Worker Cloudflare n'est pas un téléphone : pas de magasin d'applications, pas d'identité
+d'appareil, une adresse IP de centre de données. Ce que montre la capture décide, et il n'y
+a que quatre cas :
+
+| Ce que montre la capture | Exploitable ? | Ce qu'il faut faire |
+|---|---|---|
+| Aucun en-tête d'identité | **oui, directement** | recopier l'URL dans `AMONT.url` |
+| Clé d'API fixe, la même à chaque lancement | **oui** | la poser dans `AMONT.entetes` ; prévoir qu'elle tourne un jour |
+| Jeton court lié à un appareil, obtenu par un appel d'enregistrement anonyme rejouable | **oui, avec renouvellement** | rejouer l'enregistrement dans le Worker, garder le jeton en KV, le renouveler avant expiration |
+| Jeton conditionné à une attestation Play Integrity / SafetyNet, ou à une inscription push Firebase liée à l'appareil | **non** | voir ci-dessous |
+
+Le quatrième cas est le seul vrai mur, et il faut le dire franchement : une attestation
+Play Integrity est signée par Google pour un appareil réel ; un Worker ne peut pas la
+produire, et aucun contournement n'en serait durable. **L'alternative la moins fragile
+n'est alors pas technique : demander à Ports de Normandie un flux, un webhook ou une page
+d'état.** Ils diffusent déjà cette information publiquement, republier est dans leur
+intérêt, et une source obtenue de bon gré ne casse pas à la prochaine mise à jour de
+l'appli. À défaut seulement, un vieux téléphone Android laissé allumé qui relaie vers
+`/api/statut` — mais c'est une machine de plus à surveiller pour deux mots.
+
+Trois mesures à relever dans la capture, qui décident du reste :
+
+- **durée de vie du jeton** — `citykomi_traces.mjs` la lit si c'est un JWT (`exp` moins `iat`) ;
+- **l'appel est-il accepté depuis ailleurs** — rejouer la requête en `curl` depuis un autre
+  réseau ; si elle passe, elle passera depuis un Worker ;
+- **le plafond de débit** — un relevé par minute est modeste, mais vérifier qu'une rafale de
+  dix appels ne déclenche pas un 429.
+
+Republier une information publique en citant sa source est l'usage ; le collecteur se nomme
+dans son `User-Agent` et n'interroge qu'une fois par minute, pour qu'on puisse l'identifier
+et le joindre.
 
 ### La chaîne
 
@@ -229,8 +317,7 @@ l'application avec mitmproxy, relever l'adresse appelée, et la donner à la son
 
 Un worker séparé, et non une fonction Pages : **Pages ne sait pas déclencher de tâche
 planifiée**, seuls les Workers ont des Cron Triggers. GitHub Actions ne convient pas non
-plus — sa granularité est de cinq minutes, et ses exécutions sont retardées de dix à vingt
-minutes aux heures chargées.
+plus — granularité de cinq minutes, et retards de dix à vingt minutes aux heures chargées.
 
 ### Le quota commande l'écriture
 
@@ -248,11 +335,27 @@ L'espace KV est **dédié**, et non celui des suggestions et des compteurs : les
 plafonds d'écriture seraient sinon communs, et une journée de forte fréquentation — les
 compteurs peuvent consommer jusqu'à 999 écritures — empêcherait le statut de s'enregistrer.
 
+### Le point de vue est celui de la route
+
+Sur un pont tournant, « ouvert » seul est ambigu : ouvert aux navires veut dire coupé à la
+route. Le site affiche donc ce que vient vérifier celui qui le consulte, en nommant la
+circulation explicitement :
+
+| État | Français | Anglais |
+|---|---|---|
+| vert | Pont ouvert à la circulation | Bridge open to traffic |
+| rouge | Pont fermé à la circulation – passage de navires | Bridge closed to traffic – ships passing |
+
+Le diffuseur, lui, reste cité tel quel : seul l'affichage est levé de son ambiguïté. Le
+reste du site continue d'employer « ouverture » au sens des navires, qui est le sens des
+horaires de marée — d'où l'intérêt de ne jamais laisser le mot seul dans ce bloc.
+
 ### Cas limites
 
 | Situation | Ce qui se passe |
 |---|---|
-| Amont en panne, ou 429 | rien n'est écrit, l'enregistrement reste ; la reprise est la minute suivante |
+| `AMONT.url` non renseigné | le collecteur se tait, le site n'affiche rien — état de départ |
+| Amont en panne, ou 429 | rien n'est écrit, l'enregistrement reste ; reprise la minute suivante |
 | Panne prolongée | l'enregistrement se périme au bout de 35 min, le site cesse d'afficher |
 | Statut inchangé | aucune écriture, sauf le battement des 30 min |
 | Message sans statut lisible | rien n'est écrit — le diffuseur publie aussi des communiqués |
@@ -260,27 +363,15 @@ compteurs peuvent consommer jusqu'à 999 écritures — empêcherait le statut d
 | « Le pont sera fermé demain » | ignoré : une annonce n'est pas un état courant |
 | « fermé à la circulation, ouvert aux piétons » | ignoré : les deux mots, on ne tranche pas |
 | Message vieux de plus de 30 jours | ignoré : le diffuseur s'est tu |
-| Collecteur jamais déployé | `/api/statut` répond `etat: null`, le site n'affiche rien |
 
 Le ton est délibérément prudent : ne rien dire coûte moins cher que d'annoncer un pont
 ouvert qui ne l'est pas. Les messages hors format reconnu sont acceptés mais marqués
 `confiance: "mot"` plutôt que `"entete"`, ce qui laisse la possibilité de ne montrer que
 les seconds.
 
-### Attention au sens des mots
-
-Sur un pont tournant, **« ouvert » est ambigu** : ouvert aux navires veut dire coupé à la
-route, et l'inverse. Le reste du site emploie « ouverture » au sens des navires ; les
-libellés du bloc de statut, eux, sont écrits au sens du feu vert routier, d'après la
-description des messages diffusés. **À confirmer sur de vrais messages avant la mise en
-ligne.** Si le sens est inverse, il n'y a que les clés `etatOuvert` et `etatFerme` à
-échanger dans les deux dictionnaires du gabarit ; rien d'autre n'en dépend.
-
 ### Déploiement
 
-Une fois la sonde concluante, renseigner `AMONT` en tête de `workers/statut/index.js` :
-`forme` vaut `wordpress`, `flux` ou `json` — cette dernière se pilote par des chemins
-pointés, et c'est par là que passera Citykomi.
+Une fois `AMONT` renseigné depuis la capture :
 
 ```bash
 cd workers/statut
@@ -337,7 +428,7 @@ src/
   test_page_logic.js          vérifie la logique des créneaux sur les 915 jours
   test_suggestions.mjs        vérifie la fonction de recueil, sans déployer
   test_frequentation.mjs      vérifie les compteurs et le filtrage des robots
-  sonde_statut.mjs            cherche une source web portant le statut du pont (étape A)
+  citykomi_traces.mjs         isole les appels Citykomi dans une capture HAR, masque les jetons
   test_statut.mjs             vérifie la lecture du statut, l'écriture et la péremption
   model.json, extra.json      coefficients du modèle harmonique ajusté
   bridge.svg.html, gen_bridge.js   ancienne silhouette dessinée du pont, conservée
