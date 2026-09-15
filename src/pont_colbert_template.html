@@ -249,6 +249,30 @@
      présents » doit se lire ici aussi, l'ouverture n'étant jamais acquise */
   .compte-sous { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
 
+  /* ---- statut courant, republie depuis Ports de Normandie ----
+     Aucune couleur nouvelle : le vert est deja celui des ouvertures possibles, le rouge
+     celui des pleines mers. Le lecteur a appris ces deux registres en haut de page, il ne
+     doit pas en apprendre un troisieme ici. */
+  .etat {
+    display: grid; gap: 2px; margin: 14px 0 0; padding: 12px 14px;
+    border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+  }
+  .etat[hidden] { display: none; }
+  .etat.ouvert { border-color: var(--go-line); background: var(--go-bg); }
+  .etat.ferme { border-color: var(--pm-line); background: var(--pm-bg); }
+  .etat-lbl {
+    font: 700 .68rem/1 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+  .etat-mot {
+    font: 700 1.6rem/1.05 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+  }
+  .etat-quand { font-size: .82rem; opacity: .85; }
+  .etat.ouvert .etat-lbl, .etat.ouvert .etat-mot, .etat.ouvert .etat-quand { color: var(--go-ink); }
+  .etat.ferme .etat-lbl, .etat.ferme .etat-mot, .etat.ferme .etat-quand { color: var(--pm-ink); }
+  /* la provenance reste en gris : c'est une mention, pas une information */
+  .etat-sous { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
+
   .dayhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 15px 0 4px; }
   .dayhead h2 {
     margin: 0; font-family: 'Playfair Display', 'Cinzel', Georgia, 'Times New Roman', serif;
@@ -514,6 +538,16 @@
     <button class="arrow" id="next" type="button" data-i18n-aria="jourSuiv" aria-label="Jour suivant">→</button>
   </nav>
 
+  <!-- Statut courant diffusé par Ports de Normandie, republié tel quel. Reste caché tant
+       qu'aucun relevé frais n'est disponible : le site ne montre jamais un état qu'il ne
+       peut pas dater. -->
+  <div class="etat" id="etat" hidden>
+    <span class="etat-lbl" data-i18n="etatLbl">En ce moment</span>
+    <b class="etat-mot" id="etatMot"></b>
+    <span class="etat-quand" id="etatQuand"></span>
+    <span class="etat-sous" data-i18n="etatSource">selon Ports de Normandie</span>
+  </div>
+
   <!-- Décompte vers la prochaine ouverture possible. Il vise toujours « maintenant »,
        quel que soit le jour consulté, d'où l'heure rappelée en dessous. -->
   <div class="compte" id="compte" hidden>
@@ -693,6 +727,9 @@ const TEXTES = {
     navJour: "Choix du jour", jourPrec: "Jour précédent", jourSuiv: "Jour suivant", dateChamp: "Date",
     aujourdhui: "↩ Aujourd'hui",
     prochaineOuverture: "Prochaine ouverture",
+    etatLbl: "En ce moment", etatSource: "annoncé par Ports de Normandie",
+    etatOuvert: "Ouvert à la circulation", etatFerme: "Fermé à la circulation",
+    etatDepuis: h => "depuis " + h,
     compteA: (quoi, heure) => quoi + " · à " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " à " + heure,
     compteMaintenant: "maintenant",
@@ -795,6 +832,9 @@ const TEXTES = {
     navJour: "Choose a day", jourPrec: "Previous day", jourSuiv: "Next day", dateChamp: "Date",
     aujourdhui: "↩ Today",
     prochaineOuverture: "Next opening",
+    etatLbl: "Right now", etatSource: "as announced by Ports de Normandie",
+    etatOuvert: "Open to traffic", etatFerme: "Closed to traffic",
+    etatDepuis: h => "since " + h,
     compteA: (quoi, heure) => quoi + " · at " + heure,
     compteAutreJour: (quoi, jour, heure) => quoi + " · " + jour + " at " + heure,
     compteMaintenant: "now",
@@ -1071,6 +1111,54 @@ function render() {
   }
 }
 
+// ---- statut courant du pont ----
+// Le collecteur (workers/statut/) relève une fois par minute le statut diffusé par Ports
+// de Normandie ; /api/statut ne rend que des relevés datés et frais. Toute autre réponse —
+// panne d'amont, collecteur arrêté, message illisible — laisse le bloc caché. Le site
+// préfère ne rien dire plutôt qu'affirmer un état qu'il ne peut plus dater : se fier à un
+// « ouvert » vieux de trois heures ferait traverser la ville pour rien.
+//
+// SENS DES MOTS. Sur un pont tournant, « ouvert » est ambigu : ouvert aux navires veut dire
+// coupé à la route, et l'inverse. Les libellés retenus ici sont ceux du feu vert routier.
+// Si les messages réels disent l'inverse, il n'y a que les clés etatOuvert et etatFerme à
+// échanger dans les deux dictionnaires — rien d'autre ne dépend de ce choix.
+const API_STATUT = "/api/statut";
+const RELEVE_STATUT = 60000;  // le collecteur ne va pas plus vite : inutile de demander plus
+
+// Retenu pour pouvoir réafficher le bloc lors d'un changement de langue, sans attendre le
+// relevé suivant.
+let dernierStatut = null;
+
+function majStatut() {
+  const bloc = $("etat");
+  const d = dernierStatut;
+  if (!d || !d.frais || (d.etat !== "ouvert" && d.etat !== "ferme")) { bloc.hidden = true; return; }
+
+  const ouvert = d.etat === "ouvert";
+  bloc.classList.toggle("ouvert", ouvert);
+  bloc.classList.toggle("ferme", !ouvert);
+  $("etatMot").textContent = t(ouvert ? "etatOuvert" : "etatFerme");
+
+  const depuis = d.depuis ? new Date(d.depuis) : null;
+  $("etatQuand").textContent = depuis && !isNaN(depuis.getTime()) ? t("etatDepuis", fmtHM.format(depuis)) : "";
+  bloc.hidden = false;
+}
+
+(function statut() {
+  const relever = () => fetch(API_STATUT, { cache: "no-store" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => { dernierStatut = d; majStatut(); })
+    .catch(() => { /* indisponible : le bloc reste caché, le reste de la page fonctionne */ });
+
+  relever();
+  setInterval(relever, RELEVE_STATUT);
+  // Un onglet repris au premier plan relève aussitôt : c'est le moment où l'on regarde, et
+  // la réponse a pu changer pendant que l'onglet dormait.
+  addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") relever();
+  });
+})();
+
 // ---- décompte vers la prochaine ouverture ----
 // Il vise toujours l'instant présent, quel que soit le jour affiché : c'est la question
 // que se pose un capitaine en ouvrant le site. Seules les ouvertures possibles comptent —
@@ -1236,6 +1324,7 @@ function appliquerLangue(langue) {
   majBoutonTheme();  // son libellé et le texte alternatif de la photo changent aussi
   render();          // la frise, les dates et les jours suivants sont réengendrés
   majCompte(true);   // le décompte retient le libellé du créneau : il faut le refaire
+  majStatut();       // le statut courant est posé par script, pas par data-i18n
 }
 
 $("langBtn").addEventListener("click", () => appliquerLangue(LANGUE === "fr" ? "en" : "fr"));

@@ -1,0 +1,27 @@
+# Collecteur du statut du pont. Worker distinct du projet Pages : Pages ne sait pas
+# déclencher de tâche planifiée, seuls les Workers ont des Cron Triggers.
+name = "pont-colbert-statut"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+# Une fois par minute. C'est la cadence la plus fine qu'accepte Cloudflare, et elle suffit :
+# une manœuvre de pont dure plusieurs minutes.
+[triggers]
+crons = ["* * * * *"]
+
+# Espace KV partagé avec le projet Pages, qui le lit par /api/statut.
+#
+# Un espace DÉDIÉ, et non celui des suggestions et des compteurs : les deux plafonds
+# d'écriture seraient sinon communs, et une journée de forte fréquentation — les compteurs
+# peuvent consommer jusqu'à 999 écritures — empêcherait le statut de s'enregistrer. Deux
+# espaces, deux budgets.
+#
+# Créer l'espace puis coller son id ici :
+#   npx wrangler kv namespace create PONT_ETAT
+[[kv_namespaces]]
+binding = "ETAT"
+id = "à_remplacer_par_l_id_rendu_par_wrangler"
+
+# MODERATION_JETON n'est pas déclaré ici : c'est un secret, il se pose par
+#   npx wrangler secret put MODERATION_JETON
+# Il ne protège que le déclenchement manuel par requête HTTP ; le cron n'en a pas besoin.

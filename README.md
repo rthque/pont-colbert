@@ -186,6 +186,127 @@ Vérifier la fonction sans déployer :
 node src/test_suggestions.mjs
 ```
 
+## Statut en direct
+
+Le pont est ouvert ou fermé ; Ports de Normandie l'annonce par le diffuseur Citykomi
+« PONT COLBERT - DIEPPE ». Ce statut est republié ici en quasi-temps réel.
+
+### La voie retenue
+
+Trois voies étaient possibles : lire une source web (A), intercepter le trafic de
+l'application (B), émuler Android et lire l'écran (C). **Seule A mérite d'être tentée**, et
+tout est écrit pour elle. B et C demandent une machine allumée en permanence pour
+republier ce qui est, de toute façon, une information publique ; C ajoute un émulateur et
+de l'OCR, soit une chaîne fragile pour deux mots.
+
+Citykomi annonce publiquement « des API pour connecter Citykomi à vos outils », sans
+documentation ouverte. Deux pistes, donc, et la sonde tranche :
+
+```bash
+node src/sonde_statut.mjs          # --verbeux pour voir les corps de réponse
+```
+
+Elle interroge, dans l'ordre, l'API REST du site de Ports de Normandie, ses flux, ses pages
+— où elle repère les adresses embarquées — puis les hôtes Citykomi plausibles, et classe ce
+qui répond. Elle distingue aussi un réseau filtré d'un refus des sources : des hôtes sans
+rapport qui répondent tous le même code ne se sont pas concertés. **Cette sonde n'a pas
+encore été lancée depuis un réseau ordinaire** : elle l'a été depuis un conteneur dont les
+sorties HTTPS sont filtrées, et n'a donc rien pu conclure.
+
+Si aucune source ne porte le statut, alors seulement passer à B : capturer le trafic de
+l'application avec mitmproxy, relever l'adresse appelée, et la donner à la sonde
+(`--url`). Le collecteur ci-dessous n'a pas à changer pour autant.
+
+### La chaîne
+
+| Où | Quoi |
+|---|---|
+| `workers/statut/` | worker Cloudflare, Cron Trigger `* * * * *` : relève l'amont, écrit dans KV |
+| espace KV `PONT_ETAT` | un seul enregistrement, sous la clé `statut` |
+| `functions/api/statut.js` | sert l'enregistrement, en lecture seule, sur `/api/statut` |
+| `functions/status.json.js` | la même réponse sous `/status.json` |
+| `index.html` | affiche le statut sous la barre de date, et rien sans relevé frais |
+
+Un worker séparé, et non une fonction Pages : **Pages ne sait pas déclencher de tâche
+planifiée**, seuls les Workers ont des Cron Triggers. GitHub Actions ne convient pas non
+plus — sa granularité est de cinq minutes, et ses exécutions sont retardées de dix à vingt
+minutes aux heures chargées.
+
+### Le quota commande l'écriture
+
+Le cron s'exécute 1 440 fois par jour ; l'offre KV gratuite plafonne à 1 000 écritures. Une
+écriture par passage serait donc épuisée avant 17 h. **On n'écrit que lorsque l'état
+change**, plus un battement toutes les 30 minutes pour attester que le contrôle a bien
+lieu : la simulation sur 24 h (`node src/test_statut.mjs`) relève 70 écritures pour 1 440
+passages.
+
+Ce battement est ce qui permet de distinguer « ouvert depuis ce matin » de « le collecteur
+est mort ce matin ». Au-delà de 35 minutes sans relevé, `/api/statut` cesse d'affirmer quoi
+que ce soit et le site n'affiche plus rien.
+
+L'espace KV est **dédié**, et non celui des suggestions et des compteurs : les deux
+plafonds d'écriture seraient sinon communs, et une journée de forte fréquentation — les
+compteurs peuvent consommer jusqu'à 999 écritures — empêcherait le statut de s'enregistrer.
+
+### Cas limites
+
+| Situation | Ce qui se passe |
+|---|---|
+| Amont en panne, ou 429 | rien n'est écrit, l'enregistrement reste ; la reprise est la minute suivante |
+| Panne prolongée | l'enregistrement se périme au bout de 35 min, le site cesse d'afficher |
+| Statut inchangé | aucune écriture, sauf le battement des 30 min |
+| Message sans statut lisible | rien n'est écrit — le diffuseur publie aussi des communiqués |
+| « Fermeture du pont pour travaux » | ignoré : `fermeture` n'est pas `fermé` |
+| « Le pont sera fermé demain » | ignoré : une annonce n'est pas un état courant |
+| « fermé à la circulation, ouvert aux piétons » | ignoré : les deux mots, on ne tranche pas |
+| Message vieux de plus de 30 jours | ignoré : le diffuseur s'est tu |
+| Collecteur jamais déployé | `/api/statut` répond `etat: null`, le site n'affiche rien |
+
+Le ton est délibérément prudent : ne rien dire coûte moins cher que d'annoncer un pont
+ouvert qui ne l'est pas. Les messages hors format reconnu sont acceptés mais marqués
+`confiance: "mot"` plutôt que `"entete"`, ce qui laisse la possibilité de ne montrer que
+les seconds.
+
+### Attention au sens des mots
+
+Sur un pont tournant, **« ouvert » est ambigu** : ouvert aux navires veut dire coupé à la
+route, et l'inverse. Le reste du site emploie « ouverture » au sens des navires ; les
+libellés du bloc de statut, eux, sont écrits au sens du feu vert routier, d'après la
+description des messages diffusés. **À confirmer sur de vrais messages avant la mise en
+ligne.** Si le sens est inverse, il n'y a que les clés `etatOuvert` et `etatFerme` à
+échanger dans les deux dictionnaires du gabarit ; rien d'autre n'en dépend.
+
+### Déploiement
+
+Une fois la sonde concluante, renseigner `AMONT` en tête de `workers/statut/index.js` :
+`forme` vaut `wordpress`, `flux` ou `json` — cette dernière se pilote par des chemins
+pointés, et c'est par là que passera Citykomi.
+
+```bash
+cd workers/statut
+npx wrangler kv namespace create PONT_ETAT   # coller l'id rendu dans wrangler.toml
+npx wrangler secret put MODERATION_JETON     # protège le déclenchement manuel
+npx wrangler deploy
+```
+
+Puis, dans le tableau de bord Pages du site, lier le **même** espace KV sous le nom de
+variable `ETAT`, afin que `/api/statut` le lise.
+
+Vérifier sans attendre la minute suivante, et suivre le cron :
+
+```bash
+curl -X POST https://pont-colbert-statut.<compte>.workers.dev \
+  -H "Authorization: Bearer <MODERATION_JETON>"
+npx wrangler tail
+curl -s https://pont-colbert.fr/api/statut
+```
+
+Vérifier la chaîne sans déployer :
+
+```bash
+node src/test_statut.mjs
+```
+
 ## Structure
 
 ```
@@ -195,6 +316,11 @@ docs/               avis officiel de la capitainerie : PDF et pages en images
 functions/
   api/suggestions.js   recueil des propositions (fonction Pages + espace KV)
   api/frequentation.js compteurs de visites, robots écartés
+  api/statut.js        statut courant du pont, en lecture seule
+  status.json.js       la même réponse, sous /status.json
+workers/
+  statut/index.js      collecteur : relève l'amont chaque minute, écrit sur changement
+  statut/wrangler.toml cron et liaison KV
 src/
   pont_colbert_template.html  gabarit : styles, mise en page, logique d'affichage
   prepare_photo.py            recadre une photo et produit les largeurs voulues
@@ -211,6 +337,8 @@ src/
   test_page_logic.js          vérifie la logique des créneaux sur les 915 jours
   test_suggestions.mjs        vérifie la fonction de recueil, sans déployer
   test_frequentation.mjs      vérifie les compteurs et le filtrage des robots
+  sonde_statut.mjs            cherche une source web portant le statut du pont (étape A)
+  test_statut.mjs             vérifie la lecture du statut, l'écriture et la péremption
   model.json, extra.json      coefficients du modèle harmonique ajusté
   bridge.svg.html, gen_bridge.js   ancienne silhouette dessinée du pont, conservée
                                    pour mémoire ; plus utilisée depuis le héro photo
