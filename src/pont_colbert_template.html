@@ -569,7 +569,7 @@
   <div class="avis">
     <img src="__AVIS_PAGE1__" width="1000" height="1415" loading="lazy" decoding="async"
          data-i18n-alt="avisAlt1"
-         alt="Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la pleine mer), ouvertures à horaires fixes à 07h30 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 réservées aux navires EMDT.">
+         alt="Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la pleine mer), ouvertures à horaires fixes à 07h40 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 réservées aux navires EMDT.">
     <img src="__AVIS_PAGE2__" width="1000" height="1415" loading="lazy" decoding="async"
          data-i18n-alt="avisAlt2"
          alt="Avis aux usagers, page 2 : dispositions particulières, liste de diffusion, signature du lieutenant de port.">
@@ -594,7 +594,7 @@
     <h4 class="g">2 · Ouvertures à horaires fixes</h4>
     <p>Réalisées uniquement si des navires se présentent :</p>
     <ul>
-      <li><b>07 h 30</b> ;</li>
+      <li><b>07 h 40</b> ;</li>
       <li><b>18 h 30</b>.</li>
     </ul>
 
@@ -714,7 +714,7 @@ const TEXTES = {
     avisSource: "Capitainerie du port de Dieppe — 8 juillet 2026. Conditions d'exploitation et modalités " +
       "d'ouverture du pont Colbert.",
     avisAlt1: "Avis aux usagers, page 1 : ouvertures à la marée (2 h avant, 45 min avant et 45 min après la " +
-      "pleine mer), ouvertures à horaires fixes à 07h30 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 " +
+      "pleine mer), ouvertures à horaires fixes à 07h40 et 18h30, ouvertures exceptionnelles à 11h30 et 15h30 " +
       "réservées aux navires EMDT.",
     avisAlt2: "Avis aux usagers, page 2 : dispositions particulières, liste de diffusion, signature du " +
       "lieutenant de port.",
@@ -731,7 +731,7 @@ const TEXTES = {
       "compatibles avec ces créneaux.</p>" +
       '<h4 class="g">2 · Ouvertures à horaires fixes</h4>' +
       "<p>Réalisées uniquement si des navires se présentent :</p>" +
-      "<ul><li><b>07 h 30</b> ;</li><li><b>18 h 30</b>.</li></ul>" +
+      "<ul><li><b>07 h 40</b> ;</li><li><b>18 h 30</b>.</li></ul>" +
       '<h4 class="o">3 · Ouvertures exceptionnelles</h4>' +
       "<p>En cas de contrainte technique, de dégradation imprévisible des conditions de mer ou de force " +
       "majeure :</p><ul><li><b>11 h 30</b> ;</li><li><b>15 h 30</b>.</li></ul>" +
@@ -816,7 +816,7 @@ const TEXTES = {
     avisSource: "Dieppe harbour master's office — 8 July 2026. Operating conditions and opening arrangements " +
       "for the Pont Colbert.",
     avisAlt1: "Notice to users, page 1: tide-based openings (2 h before, 45 min before and 45 min after high " +
-      "water), fixed-time openings at 07:30 and 18:30, exceptional openings at 11:30 and 15:30 reserved for " +
+      "water), fixed-time openings at 07:40 and 18:30, exceptional openings at 11:30 and 15:30 reserved for " +
       "EMDT vessels.",
     avisAlt2: "Notice to users, page 2: special provisions, circulation list, signature of the port lieutenant.",
     avisPdf: "Open the official PDF ↗",
@@ -831,7 +831,7 @@ const TEXTES = {
       "necessity, or for a commercial vessel whose operating constraints are not compatible with these slots.</p>" +
       '<h4 class="g">2 · Fixed-time openings</h4>' +
       "<p>Carried out only if vessels present themselves:</p>" +
-      "<ul><li><b>07:30</b>;</li><li><b>18:30</b>.</li></ul>" +
+      "<ul><li><b>07:40</b>;</li><li><b>18:30</b>.</li></ul>" +
       '<h4 class="o">3 · Exceptional openings</h4>' +
       "<p>In case of technical constraint, unforeseeable deterioration of sea conditions, or force majeure:</p>" +
       "<ul><li><b>11:30</b>;</li><li><b>15:30</b>.</li></ul>" +
@@ -978,7 +978,7 @@ function eventsFor(dayStr) {
       });
     }
   }
-  for (const [hh, mm] of [[7, 30], [18, 30]]) {
+  for (const [hh, mm] of [[7, 40], [18, 30]]) {
     const ms = localToUtc(dayStr, hh, mm);
     evs.push({ ms, cls: "go", ico: "boat", big: hm(ms), title: t("ouvFixe"), sub: t("sousFixe") });
   }
