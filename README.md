@@ -12,7 +12,7 @@ qu'en présence de navires.
 | Type | Horaires |
 |---|---|
 | Sur marée | PM − 2 h · PM − 45 min · PM + 45 min |
-| Heure fixe (quai de la Somme) | 07 h 30 · 18 h 30 |
+| Heure fixe (quai de la Somme) | 07 h 40 · 18 h 30 |
 | Exceptionnelles | 11 h 30 · 15 h 30 |
 
 Un décompte placé sous la barre de date annonce le temps restant avant la prochaine

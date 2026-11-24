@@ -47,7 +47,7 @@ function eventsFor(dayStr) {
     }
     if (keyOf(pmMs) === dayStr) evs.push({ ms: pmMs, kind: 'PM', h: t[1] / 100, coeff: t[3], pred: t[4] });
   }
-  for (const [hh, mm, kind] of [[7, 30, 'FIXE'], [18, 30, 'FIXE'], [11, 30, 'EXC'], [15, 30, 'EXC']])
+  for (const [hh, mm, kind] of [[7, 40, 'FIXE'], [18, 30, 'FIXE'], [11, 30, 'EXC'], [15, 30, 'EXC']])
     evs.push({ ms: localToUtc(dayStr, hh, mm), kind });
   evs.sort((a, b) => a.ms - b.ms);
   return evs;
